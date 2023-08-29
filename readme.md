@@ -10,3 +10,10 @@ Social media for punk shit. Somewhere to post about shows, sewing tips etc witho
 * Punk means a lot of things and theres a lot of pieces to the subculture, so scenes are tabbed into categories, (e.g. Clothes, shows, art, activism etc)
 
 * Moderation should be communal, this is going to be a serious WIP to balance good moderation with the ideology of community policing, the current idea is if something is reported enough times for something it goes to a moderation page where members of the scene can vote on whether it should be taken down.
+
+# TODO
+
+* [ ] Account creationg
+* [ ] create/join a scene
+* [ ] request new categories to a scene
+* [ ] create a post
