@@ -13,7 +13,7 @@ Social media for punk shit. Somewhere to post about shows, sewing tips etc witho
 
 # TODO
 
-* [ ] Account creationg
+* [x] Account creationg
 * [ ] create/join a scene
 * [ ] request new categories to a scene
 * [ ] create a post

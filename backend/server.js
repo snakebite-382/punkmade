@@ -1,9 +1,10 @@
 // imports
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const dotEnv = require("dotenv");
+const cors = require("cors");
+const bodyParser = require("body-parser");
 
 // DOTENV
-const dotEnv = require("dotenv");
 dotEnv.config({path: __dirname + "/.env"})
 
 // Setup the express app
@@ -12,26 +13,26 @@ const app = express();
 // runtime constants 
 const frontendDir = __dirname + "/frontend/build";
 const port = process.env.port || 5000;
-const mongoUri = process.env.MONGO_URI;
 
-// connect DB
-const mongoOptions = {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    }    
-}
+// security
+const clientOrigins = ["http://localhost:3000", "http://localhost:5000", "http://127.0.0.1:3000", "http://127.0.0.1:5000"];
+app.use(cors({ origin: clientOrigins }));
 
-const mongo = new MongoClient(mongoUri, mongoOptions);
-mongo.connect().then(
-    console.log("DB CONNECTED")
-);
+// form parsing
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// API
+const APIRouter = express.Router();
+app.use("/api", APIRouter);
+
+const ScenesRouter = require("./api/Scenes/Scenes.router")
+APIRouter.use("/scenes", ScenesRouter)
 
 // static files
 app.use(express.static(frontendDir));
 
-// redirect all requests to the frontend
+// redirect all requests to the frontend that aren't api reqs or static files
 app.get('/', (request, response) => {
     response.sendFile(frontendDir + "/index.html");
 });
@@ -40,5 +41,3 @@ app.get('/', (request, response) => {
 app.listen(port, () => {
     console.log('Your app is listening on port ' + port);
 });
-
-mongo.close();
