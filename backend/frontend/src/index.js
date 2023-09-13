@@ -6,10 +6,14 @@ import './index.css';
 // pages
 import Home from "./pages/home"
 import Error404 from './pages/404';
-import Scenes from './pages/Scenes';
+import CreateScene from './pages/CreateScene';
 
 //auth
 import { Auth0Provider } from "@auth0/auth0-react";
+
+//query
+import { QueryClient, QueryClientProvider} from "@tanstack/react-query"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 
 //leaflet map
 import 'leaflet/dist/leaflet.css';
@@ -26,10 +30,13 @@ const router = createBrowserRouter([
     errorElement: <Error404/>,
   },
   {
-    path: "/scenes",
-    element: <Scenes/>
+    path: "/create_scene",
+    element: <CreateScene/>
   }
 ]);
+
+
+const queryClient = new QueryClient();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -42,7 +49,10 @@ root.render(
         audience: "https://punkmade.us.auth0.com/api/v2/",
       }}
     >
-      <RouterProvider router={router}/>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router}/>
+        {process.env.REACT_APP_ENVIRONMENT === "dev" ? <ReactQueryDevtools/>: <></> }
+      </QueryClientProvider>
     </Auth0Provider>
   </React.StrictMode>
 );

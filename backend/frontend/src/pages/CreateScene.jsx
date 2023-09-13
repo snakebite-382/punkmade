@@ -15,23 +15,13 @@ import { MapContainer, TileLayer, LayerGroup } from 'react-leaflet'
 
 import MapCircle from "../components/map/mapCircle";
 
-export default withAuthenticationRequired(function Scenes() {
+export default withAuthenticationRequired(function CreateScene() {
     const rangeMin = 10;
     const rangeMax = 100;
     const defaultRange = 20;
     const milesToMeters = 1609.34;
 
     let { getAccessTokenSilently } = useAuth0();
-    async function test() {
-        let token = await getAccessTokenSilently();
-        alert(token)
-        await axios.get(
-            process.env.REACT_APP_API_URL + "/scenes/",
-            { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } }
-        ).catch(e => {
-            console.log(e);
-        })
-    }
 
     const { user } = useAuth0()
 
@@ -112,10 +102,6 @@ export default withAuthenticationRequired(function Scenes() {
                 :
                     <h1>Not Rendering</h1>
             }
-            
-
-            <button onClick={test}>test</button>
-
         </>
     )
 })

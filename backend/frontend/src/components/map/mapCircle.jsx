@@ -6,35 +6,45 @@ import axios from "axios";
 
 import { useAuth0 } from "@auth0/auth0-react";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
 
 export default function MapCircle(props) {
     const { getAccessTokenSilently } = useAuth0();
 
     console.log(process.env.REACT_APP_API_URL)
 
-    async function getName() { // sends a request to our API to figure out the name for a preview
+    async function getName(location) { // sends a request to our API to figure out the name for a preview
         let token = await getAccessTokenSilently();
-        axios.get(
-            process.env.REACT_APP_API_URL + `/scenes/get_locality/${props.center.join(",")}`,
+        let res = await axios.get(
+            process.env.REACT_APP_API_URL + `/scenes/get_locality/${location}`,
             {headers: { 'Authorization': `Bearer ${token}`}}
-        ).then(result => {
-                props.setName(result.data + " Punk")
-            }
-        ).catch(e => console.error(e))
+        );
+        props.setName(res.data + " Punk");
+        return res.data
     }
 
-    const map = useMapEvents({ // click listener for map
+    const {isFetching, isLoading, isError, error}= useQuery({
+        queryFn: () => {return getName(props.center.join(","))},
+        queryKey: ["scene_name", props.center.join(",")]
+    })
+    let queryClient = useQueryClient();
+
+    useMapEvents({ // click listener for map
         async click(e) {
             props.setCenter([e.latlng.lat, e.latlng.lng])
-            getName()
+            queryClient.invalidateQueries({queryKey: ["scene_name"]})
         }
     })
 
-    if(props.name === "") { // if we haven't gotten a name yet, get one(so it loads the name when you load the page)
-        getName();
+    if(isLoading || isFetching) {
+        props.setName("Loading...");
     }
 
-    console.log(map); // get rid of annoying warning
+    if(isError) {
+        props.setName("ERROR")
+        console.error(error)
+    }
 
     return (
         <>
