@@ -1,23 +1,15 @@
-const { expressjwt: jwt } = require("express-jwt");
-const jwksRsa = require("jwks-rsa");
 const dotenv = require('dotenv');
 dotenv.config();
 
-const domain = process.env.AUTH0_DOMAIN; // domain of issuer
-const audience = process.env.AUTH0_AUDIENCE; // URL for api
+const express = require('express');
+const app = express();
+const { auth } = require('express-oauth2-jwt-bearer');
 
-// checker for JWT we just pass this into our get requests to verify them
-const checkJwt = jwt({
-    secret: jwksRsa.expressJwtSecret({
-        cache: true,
-        rateLimit: true,
-        jwksRequestsPerMinute: 5,
-        jwksUri: `https://${domain}/.well-known/jwks.json`,
-    }),
-
-    audience: audience,
-    issuer: `https://${domain}/`,
-    algorithms: ["RS256"],
+// Authorization middleware. When used, the Access Token must
+// exist and be verified against the Auth0 JSON Web Key Set.
+const checkJwt = auth({
+  audience: 'https://punkmade.us.auth0.com/api/v2/',
+  issuerBaseURL: `https://punkmade.us.auth0.com/`,
 });
 
 module.exports = {

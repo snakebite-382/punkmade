@@ -39,7 +39,7 @@ root.render(
       clientId="Pw8TzxKzHXe7GqQdty1jKnz7nkmXFtGe"
       authorizationParams={{
         redirect_uri: window.location.origin,
-        audience: process.env.REACT_APP_AUTH0_AUDIENCE
+        audience: "https://punkmade.us.auth0.com/api/v2/",
       }}
     >
       <RouterProvider router={router}/>

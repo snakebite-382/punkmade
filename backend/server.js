@@ -15,7 +15,7 @@ const frontendDir = __dirname + "/frontend/build";
 const port = process.env.port || 5000;
 
 // security
-const clientOrigins = ["http://localhost:3000", "http://localhost:5000", "http://127.0.0.1:3000", "http://127.0.0.1:5000"];
+const clientOrigins = ["*", "http://localhost:3000"];
 app.use(cors({ origin: clientOrigins }));
 
 // form parsing
