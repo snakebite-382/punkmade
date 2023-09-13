@@ -24,7 +24,7 @@ export default function MapCircle(props) {
         return res.data
     }
 
-    const {isFetching, isLoading, isError, error}= useQuery({
+    const {isLoading, isError, error}= useQuery({
         queryFn: () => {return getName(props.center.join(","))},
         queryKey: ["scene_name", props.center.join(",")]
     })
@@ -37,7 +37,7 @@ export default function MapCircle(props) {
         }
     })
 
-    if(isLoading || isFetching) {
+    if(isLoading) {
         props.setName("Loading...");
     }
 
