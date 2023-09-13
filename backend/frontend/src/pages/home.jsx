@@ -6,9 +6,6 @@ import AuthButton from "../components/auth/authButton";
 //loading
 import DefaultLoading from "../components/loading/defaultLoading";
 
-//navbar
-import NavBar from "../components/navigation/navbar";
-
 export default function Home () {
     const {user, isLoading, isAuthenticated} = useAuth0();
 
@@ -22,7 +19,6 @@ export default function Home () {
 
     return(
         <div className="app">
-            <NavBar/>
             <h1>{bannerMessage}</h1>
             <AuthButton/>
         </div>

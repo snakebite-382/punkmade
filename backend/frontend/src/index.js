@@ -7,6 +7,8 @@ import './index.css';
 import Home from "./pages/home"
 import Error404 from './pages/404';
 import CreateScene from './pages/CreateScene';
+//nav
+import NavBar from "./components/navigation/navbar";
 
 //auth
 import { Auth0Provider } from "@auth0/auth0-react";
@@ -26,12 +28,19 @@ import {
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home/>,
+    element: <NavBar/>,
     errorElement: <Error404/>,
-  },
-  {
-    path: "/create_scene",
-    element: <CreateScene/>
+    children: [
+      {
+        path: "/",
+        element: <Home/>,
+        
+      },
+      {
+        path: "/create_scene",
+        element: <CreateScene/>
+      }
+    ]
   }
 ]);
 
