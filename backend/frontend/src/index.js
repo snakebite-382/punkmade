@@ -7,6 +7,8 @@ import './index.css';
 import Home from "./pages/home"
 import Error404 from './pages/404';
 import CreateScene from './pages/CreateScene';
+import Feed from './pages/Feed';
+
 //nav
 import NavBar from "./components/navigation/navbar";
 
@@ -39,6 +41,10 @@ const router = createBrowserRouter([
       {
         path: "/create_scene",
         element: <CreateScene/>
+      },
+      {
+        path: "/feed",
+        element: <Feed/>
       }
     ]
   }

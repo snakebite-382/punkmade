@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const mongoUri = process.env.MONGO_URI;
 
 const mongoOptions = {
@@ -12,5 +12,6 @@ const mongoOptions = {
 const mongo = new MongoClient(mongoUri, mongoOptions);
 
 module.exports = {
-    mongo
+    mongo,
+    ObjectId
 }

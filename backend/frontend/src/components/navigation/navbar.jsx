@@ -7,6 +7,7 @@ export default function NavBar() {
         <ul>
             <li><Link to="/">Home</Link></li>
             <li><Link to="/create_scene">Create Scene</Link></li>
+            <li><Link to="/feed">Feed</Link></li>
         </ul>
         <Outlet/>
         </>

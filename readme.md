@@ -13,7 +13,36 @@ Social media for punk shit. Somewhere to post about shows, sewing tips etc witho
 
 # TODO
 
-* [x] Account creationg
-* [ ] create/join a scene
-* [ ] request new categories to a scene
-* [ ] create a post
+## Scenes
+
+* [x] create a scene
+  * [ ] prevent users from making duplicate scenes
+  * [ ] deal with overlapping scenes
+  * [ ] more customization/better scene creation
+* [ ] join a scene
+* [ ] Create posts
+  * [ ] image and mixed media posts
+  * [ ] likes
+  * [ ] comments
+* [ ] create categories
+* [ ] voting (these last two are related ;) )
+
+## Accounts
+
+* [x] create account
+* [ ] onboarding
+* [ ] delete accound
+* [ ] customize account
+* [ ] MFA
+* [ ] figure out identity providers with auth0 (merging, keep using them etc)
+
+## UI/UX
+
+* [ ] start actually doing ui/ux work
+* [ ] accessibility (ongoing)
+
+## Security
+
+## Optimization
+
+## Native apps

@@ -8,7 +8,6 @@ import { useAuth0 } from "@auth0/auth0-react";
 
 // form stuff
 import { Formik, Field, Form, ErrorMessage } from 'formik';
-// import * as Yup from "yup";
 
 // Maps (yay this hopefully won't be hell)
 import { MapContainer, TileLayer, LayerGroup } from 'react-leaflet'

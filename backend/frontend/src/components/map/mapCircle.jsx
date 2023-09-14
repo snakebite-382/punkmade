@@ -12,8 +12,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 export default function MapCircle(props) {
     const { getAccessTokenSilently } = useAuth0();
 
-    console.log(process.env.REACT_APP_API_URL)
-
     async function getName(location) { // sends a request to our API to figure out the name for a preview
         let token = await getAccessTokenSilently();
         let res = await axios.get(

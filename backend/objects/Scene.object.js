@@ -1,17 +1,59 @@
+const { uuid } = require("uuidv4");
+
+const defaultCategories = [
+    "General",
+    "Art/Music",
+    "Political"
+]
+
 class votingEntry { // to be implemented
 
 }
 
+
 class SceneUser {
     id;
-    postIDs;
 
     constructor(id) {
         this.id = id;
-        this.postIDs = [];
     }
 }
 
+class Like { // to be implemented
+
+}
+
+class Comment { //to be implemented
+
+}
+
+class Post {
+    content;
+    creator;
+    type; // either text (implemented), image (to be implemented) or mixed media (to be implemented)
+    likes; // to be implemented
+    comments; // to be implemented
+    id;
+
+    constructor(creatorID, content, type="text") {
+        this.id = uuid();
+        this.content = content;
+        this.creator = creatorID;
+        this.type = type;
+        this.likes = [];
+        this.comments = [];
+    }
+}
+
+class Category {
+    name;
+    posts;
+
+    constructor(name) {
+        this.name = name;
+        this.posts = [];
+    }
+}
 class Scene {
     users;
     name;
@@ -20,7 +62,6 @@ class Scene {
     logo; // to be implemented 
     range; 
     votes; // to be implemented
-    usedPostIDs;
     constructor(name, creatorID, center, range) {
         this.users = [];
         let creator = new SceneUser(creatorID);
@@ -32,11 +73,17 @@ class Scene {
 
         this.name = name;
 
-        this.usedPostIDs = [];
+        this.categories = [];
+
+        defaultCategories.forEach(cat => {
+            this.categories.push(new Category(cat))
+        })
     }
 }
 
 module.exports = {
-    Scene,
+    Scene, 
+    Category,
+    Post,
     SceneUser,
 };

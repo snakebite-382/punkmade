@@ -29,6 +29,9 @@ app.use("/api", APIRouter);
 const ScenesRouter = require("./api/Scenes/Scenes.router")
 APIRouter.use("/scenes", ScenesRouter)
 
+const FeedRouter = require("./api/Feed/Feed.router");
+APIRouter.use("/feed", FeedRouter);
+
 // static files
 app.use(express.static(frontendDir));
 
@@ -36,6 +39,13 @@ app.use(express.static(frontendDir));
 app.get('/', (request, response) => {
     response.sendFile(frontendDir + "/index.html");
 });
+
+process.on("exit", () => {
+    console.log("CLOSING")
+    const { mongo } = require("./api/mongo");
+    mongo.close();
+    console.log("CLOSED")
+})
 
 // listen for requests :)
 app.listen(port, () => {
