@@ -11,11 +11,11 @@ dotEnv.config({path: __dirname + "/.env"})
 const app = express();
 
 // runtime constants 
-const frontendDir = __dirname + "/frontend/build";
+const frontendDir = __dirname + "/frontend/dist";
 const port = process.env.port || 5000;
 
 // security
-const clientOrigins = ["*", "http://localhost:3000"];
+const clientOrigins = ["http://localhost:5173"];
 app.use(cors({ origin: clientOrigins }));
 
 // form parsing

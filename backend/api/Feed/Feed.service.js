@@ -3,6 +3,7 @@ const { mongo, ObjectId } = require("../mongo");
 const { Post } = require("../../objects/Scene.object");
 
 async function get_init_feed_data(req, res) {
+    console.log("HIT INIT DATA")
     let data = {};
 
     //get the app metadata
@@ -51,6 +52,7 @@ async function populateSceneIDListWithBasics(ids) {
 }
 
 async function getPosts(req, res) {
+    console.log("HIT POSTS")
     if(typeof req.params.scene === "string" && typeof req.params.category === "string") {
         await mongo.connect();
         const database = mongo.db(process.env.DATABASE);
@@ -69,14 +71,16 @@ async function getPosts(req, res) {
             }
         }
 
-        res.send(posts)
+        res.send(posts.slice(req.params.indexStart, req.params.indexEnd))
     }
 }
 
 async function createPost(req, res) {
     const formData = req.body;
 
-    const newPost = new Post(formData.user, formData.content, formData.type)
+    console.log(formData.creator)
+
+    const newPost = new Post(formData.creator, formData.content, formData.type)
 
     await mongo.connect();
     const database = mongo.db(process.env.DATABASE);
@@ -95,6 +99,8 @@ async function createPost(req, res) {
     })
 
     let result = await collection.updateOne(filter, {$set: {categories: newCategories}})
+
+    res.send(newPost)
 }
 
 module.exports = {

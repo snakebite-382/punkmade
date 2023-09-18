@@ -1,4 +1,4 @@
-const { uuid } = require("uuidv4");
+const { v4: uuid } = require("uuid");
 
 const defaultCategories = [
     "General",
@@ -13,9 +13,11 @@ class votingEntry { // to be implemented
 
 class SceneUser {
     id;
+    name;
 
-    constructor(id) {
-        this.id = id;
+    constructor(user) {
+        this.id = user.sub;
+        this.name = user.nickname
     }
 }
 
@@ -34,14 +36,19 @@ class Post {
     likes; // to be implemented
     comments; // to be implemented
     id;
+    timestamp;
 
-    constructor(creatorID, content, type="text") {
+    constructor(creator, content, type="text") {
         this.id = uuid();
         this.content = content;
-        this.creator = creatorID;
+        this.creator = {
+            id: creator.id,
+            name: creator.name
+        };
         this.type = type;
         this.likes = [];
         this.comments = [];
+        this.timestamp = Date();
     }
 }
 
@@ -62,10 +69,9 @@ class Scene {
     logo; // to be implemented 
     range; 
     votes; // to be implemented
-    constructor(name, creatorID, center, range) {
+    constructor(name, creator, center, range) {
         this.users = [];
-        let creator = new SceneUser(creatorID);
-        this.users.push(creator)
+        this.users.push(new SceneUser(creator))
 
         this.center = center;
         

@@ -9,13 +9,16 @@ const { Scene } = require("../../objects/Scene.object");
 async function fetchReverseGeocode(lat, lng) {
     // reverse geocode coords
     let locality;
-    await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat.toString()},${lng.toString()}&result_type=locality&key=${process.env.GEO_CODING_API_KEY}`)
+    await axios.get(`https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&apiKey=${process.env.GEO_CODING_API_KEY}`)
     .then((result) => { 
-        // the most relevant name is the first address of the first result, and we want the shorthand name
-        locality = result.data.results[0].address_components[0].short_name
+        // the most relevant name is the first address of the first result, and we want the shorthand name\
+        console.log(result.data.features[0].properties.city)
+        locality = result.data.features[0].properties.city
+    }).catch(e => {
+        console.log(e)
     })
 
-    return locality;
+    return {locality};
 }
 
 async function create(req, res) {
@@ -23,10 +26,9 @@ async function create(req, res) {
     console.log(formData)
 
     let name = await fetchReverseGeocode(...formData.center); 
-    name += " Punk"
-    console.log(name) // the name is just the locality + Punk (e.g. Boston Punk)
+    name = name.locality + " Punk"
 
-    let created = new Scene(name, formData.user.sub, formData.center, formData.range)
+    let created = new Scene(name, formData.user, formData.center, formData.range)
 
     await mongo.connect();
     const database = mongo.db(process.env.DATABASE);
@@ -56,12 +58,12 @@ async function create(req, res) {
 
     await auth0Manager.updateAppMetadata({id: formData.user.sub}, newMetadata);
     console.log("success!");
+    res.send(JSON.stringify(true))
 }
 
 async function get_locality(req, res) {
-    res.send(await fetchReverseGeocode(...req.params.latlng.split(","))) // this is just so we can send geocode info from our own api without exposing secrets
-    // also if I move away from google geocode services everything's in one place
-    console.log(req.params.latlng)
+    let latLng = req.params.latlng.split(",")
+    res.send(await fetchReverseGeocode(...latLng)) // this is just so we can send geocode info from our own api without exposing secrets
 }
 
 module.exports = {

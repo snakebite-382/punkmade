@@ -1,0 +1,73 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  border: none;
+  /* make text white for contast*/
+  /* color: white; */
+  /* font-family: "Texturina", Georgia, "Times New Roman", Times, serif; */
+}
+
+html {
+  /* make 1 rem == 10px */
+  /*font-size: 62.5%; /* (62.5/100) * 16px = 10px */
+  /* disable auto text sizing on mobile */
+  -webkit-text-size-adjust: none; /* for iOS Safari */
+  -moz-text-size-adjust: none;
+       text-size-adjust: none; /* for other mobile browsers */
+}
+
+/* as long as the user doesn't have a reduced motion preference,
+ enable smooth scrolling to avoid jumping */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  color: white;
+}
+
+/* removes the list stylings unless they have an article that makes sense */
+menu:not(article menu), ol:not(article ol), ul:not(article ul) {
+  list-style: none;
+}
+
+menu,
+ol,
+ul {
+  padding-left: 0;
+}
+
+/* fix some styling issues with list markers from previous ruleset */
+article ol, article ul {
+  list-style-position: inside;
+}
+
+/* nicer links? */
+a {
+  /* Places underlines below the descenders */
+  text-underline-position: under;
+  /* Sets the thickness as a percentage of the font size */
+  text-decoration-thickness: 8;
+}
+
+/* add pointers to lots of usable elements that don't have them */
+label, button, select, summary, [type=radio], [type=submit], [type=checkbox] {
+  cursor: pointer;
+}
+
+body {
+  /*background: black;  dark and broody oooooh*/
+  margin: 0;
+  padding: 20px;
+  width: 100vw;
+  height: 100vh;
+  overflow-x: hidden;
+}
+
+input {
+  border: 2px solid black;
+  outline: none;
+}

@@ -16,6 +16,6 @@
   "scripts": {
     "dev": "concurrently 'npm run backend' 'npm run frontend'",
     "backend": "nodemon server.js",
-    "frontend": "cd frontend && npm run start"
+    "frontend": "cd frontend && npm run dev"
   }
 }
