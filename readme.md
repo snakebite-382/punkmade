@@ -13,6 +13,8 @@ Social media for punk shit. Somewhere to post about shows, sewing tips etc witho
 
 # TODO
 
+## CONVERT TO VUE :)
+
 ## Scenes
 
 * [x] create a scene
@@ -25,7 +27,7 @@ Social media for punk shit. Somewhere to post about shows, sewing tips etc witho
   * [ ] likes
   * [ ] comments
 * [ ] create categories
-* [ ] voting (these last two are related ;) )
+* [ ] voting (these last two are related ;) 
 
 ## Accounts
 
