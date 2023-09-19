@@ -2,7 +2,6 @@
     <form @submit="onSubmit">
         <label for="content-input">Content:</label>
         <input type="text" name="content" id="content-input" v-model="content">
-
         <button type="submit">post</button>
     </form>
 </template>
@@ -26,8 +25,9 @@ export default {
 
     methods: {
         async onSubmit(e) {
-            console.log(this.feedStore.userID)
             e.preventDefault();
+
+            // create the newpost
             let newPost = {
                 content: this.content,
                 type: 'text',
@@ -37,6 +37,7 @@ export default {
                 }
             }
 
+            // send that to the backend via the store which will destructure and send it
             await this.feedStore.createPost(newPost);
         }
     }

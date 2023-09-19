@@ -5,12 +5,14 @@ const router = express.Router();
 
 const { create, get_locality } = require("./Scenes.service")
 
-router.get("/", checkJwt, (req, res) => {
-    console.log(req.user)
-})
-
+// create scene
+// takes in center, user, range
+// returns true if the scene was created
 router.post("/create/", checkJwt, create)
 
+// get locality
+// takes in a latlng array
+// returns the city for those coords
 router.get("/get_locality/:latlng", checkJwt, get_locality)
 
 module.exports = router

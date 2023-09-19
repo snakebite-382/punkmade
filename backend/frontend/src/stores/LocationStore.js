@@ -1,5 +1,4 @@
 import { defineStore }from 'pinia'
-import { roundTo } from '../helpers'
 
 const logPre = "Location Cache Store: "
 
@@ -12,10 +11,9 @@ export const locationStore = defineStore('location', {
 
     actions: {
         cacheLocality(lat, lng, name) {
-            lat = roundTo(lat, 4)
-            lng = roundTo(lng, 4)
+            // check if its already cached
             let inCache = this.checkCache(lat, lng);
-            if(!inCache) {
+            if(!inCache) { // if not add it
                 let newEntry = {
                     lat,
                     lng,
@@ -28,9 +26,9 @@ export const locationStore = defineStore('location', {
         },
 
         checkCache(lat, lng) {
-            lat = roundTo(lat, 4)
-            lng = roundTo(lng, 4)
             console.log(logPre + `Checking if lat, lng (${lat}, ${lng}) is stored in cache`)
+
+            // iterates through localities and returns the first one with the right lat, lng (mostly to store user city, but prevents a few unnecessary requests)
             for(let i = 0; i < this.cachedLocalities.length; i++) {
                 let locality = this.cachedLocalities[i];
 

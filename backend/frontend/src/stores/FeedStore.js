@@ -8,12 +8,8 @@ export const feedStore = defineStore("feed", {
         return {
             app_metadata: {},
             scenes: [],
-            currentScene: {},
+            currentScene: '', 
             currentCategory: "general",
-            categories: [{
-                name: "general",
-                posts: []
-            }],
             token: '',
             userID: '',
             initialized: false,
@@ -21,7 +17,7 @@ export const feedStore = defineStore("feed", {
     },
 
     actions: {
-        async setToken (tokenFn) {
+        async setToken (tokenFn) { //very simple, just await the token function and set it as the token
             this.token = await tokenFn()
             console.log(logPre + "Token set")
         },
@@ -29,6 +25,8 @@ export const feedStore = defineStore("feed", {
         async fetchInit(user) {
             console.log(logPre + 'Fetching initial data')
             this.user = user
+
+            // store the user and request the initial data for the feed
             const response = await fetch(`${API_URL}/get_feed_init_data/${this.user.sub}`, {
                 headers: {
                     "Authorization": `Bearer ${this.token}`
@@ -36,20 +34,29 @@ export const feedStore = defineStore("feed", {
             })
             const data = await response.json();
 
+            // gives you the app metadata and scenes
             this.app_metadata = data.app_metadata;
-            this.scenes = data.scenes
-            this.currentScene = this.getScene(data.app_metadata.preferredScene);
+            this.scenes = data.scenes;
+
+            // store current scene
+            this.currentScene = data.app_metadata.preferredScene;
+
+            this.initCategories(this.currentScene);
+
+            await this.fetchPosts(100)
 
             console.log(logPre + "Successfully initialized data")
+            return 'done'
         },
 
         async fetchPosts(batchSize) {
-            let category = this.getCategory(this.currentCategory);
-            
+            let category = this.getCategory(this.currentCategory); 
+
+            // get the current category, and base the batchsize on how many we've already fetched so we don't refetch the same post
             const start = category.posts.length;
             const end = start + batchSize;
             console.log(logPre + `Fetching posts with index [${start}, ${end})`)
-            const response = await fetch(`${API_URL}/get_posts/${this.currentScene._id}/${this.currentCategory}/${start}/${end}`, {
+            const response = await fetch(`${API_URL}/get_posts/${this.currentScene}/${this.currentCategory}/${start}/${end}`, {
                 headers: {
                     "Authorization": `Bearer ${this.token}`
                 }
@@ -57,6 +64,7 @@ export const feedStore = defineStore("feed", {
 
             const data = await response.json();
 
+            // append all the new posts
             category.posts = category.posts.concat(data)
             console.log(logPre + "Fetched posts")
         },
@@ -64,14 +72,15 @@ export const feedStore = defineStore("feed", {
         async createPost(post) {
             console.log(logPre + "Creating post: " + JSON.stringify(post))
 
+            // store that the post is posting so it shows up as such
             post.posting = true;
-            const postIndex = this.posts.length
-            this.posts.push(post);
+            const postIndex = this.getPosts().length // store where it is(in case new posts are added so we can still remove it)
+            this.getPosts().push(post); // add the new post to the posts array
 
-            post.scene = this.currentScene._id;
+            post.scene = this.currentScene; // store more post data
             post.category = this.currentCategory
 
-            const response = await fetch(`${API_URL}/create_post/`, {
+            const response = await fetch(`${API_URL}/create_post/`, { // send it 
                 method: "POST",
                 headers: {
                     'Content-Type': "application/json",
@@ -81,16 +90,37 @@ export const feedStore = defineStore("feed", {
             });
 
             if(response.status !==200) {
+                // if we didn't get the ok
                 console.log(logPre + "Error creating post, unrolling optimistic update, status: " + response.status)
-                this.posts.splice(postIndex, 1)
+                // rollback the optimistic change
+                this.getPosts().splice(postIndex, 1)
             } else {
                 console.log(logPre + "Successfully created post")
+                // otherwise, overwrite the existing post with the one returned
                 const data = await response.json()
-                this.posts[postIndex] = data
+                this.getPosts()[postIndex] = data
             }
         }, 
 
-        getScene(id) {
+        initCategories(scene) {
+            // just goes through the categories and converts it from a list of names to a name posts pair
+            console.log(logPre + "Initializing categories for scene: " + scene)
+            let categories = []
+            let target = this.getScene(scene)
+
+            for(let i = 0; i < target.categories.length; i++) {
+                categories.push({
+                    name: target.categories[i].toLowerCase(),
+                    posts: []
+                })
+            }
+
+            target.categories = categories;
+        },
+
+        // yeah these should be getters, no I won't do that cuz I moved them there and got errors and I don't like that :(
+
+        getScene(id) { // gets the scene by id
             let scene;
 
             for(let i = 0; i < this.scenes.length; i++) {
@@ -102,15 +132,16 @@ export const feedStore = defineStore("feed", {
             return scene
         },
 
-        getCategory(name) {
-            for(let i= 0; i < this.categories.length; i++) {
-                if(this.categories[i].name.localeCompare(name) === 0) {
-                    return this.categories[i]
+        getCategory(name) { // gets category by name
+            let categories = this.getScene(this.currentScene).categories;
+            for(let i= 0; i < categories.length; i++) {
+                if(categories[i].name.localeCompare(name) === 0) {
+                    return categories[i]
                 }
             }
         },
 
-        getPosts() {
+        getPosts() { // gets posts of current category
             return this.getCategory(this.currentCategory).posts
         }
     }

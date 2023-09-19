@@ -40,7 +40,7 @@ app.get('/', (request, response) => {
     response.sendFile(frontendDir + "/index.html");
 });
 
-process.on("exit", () => {
+process.on("exit", () => { // close mongo on close
     console.log("CLOSING")
     const { mongo } = require("./api/mongo");
     mongo.close();

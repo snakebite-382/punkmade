@@ -36,7 +36,7 @@ export default {
     },
 
     created() {
-        navigator.geolocation.getCurrentPosition(position=> {
+        navigator.geolocation.getCurrentPosition(position=> { // get the users location and save it
             this.userLocation = [position.coords.longitude,position.coords.latitude]
             this.selectedPos = this.userLocation;
             this.isLoading = false;
@@ -49,6 +49,7 @@ export default {
         async handleSubmit(e) {
             e.preventDefault();
             const token = await this.$auth0.getAccessTokenSilently()
+            // send the create scene request
             const response = await fetch('http://localhost:5000/api/scenes/create/', {
                 method: "POST",
                 headers: {
@@ -64,7 +65,7 @@ export default {
 
             const data = await response.json();
 
-            if(data) {
+            if(data) { // if we got back data, it worked!
                 alert("created!")
             }
         },
