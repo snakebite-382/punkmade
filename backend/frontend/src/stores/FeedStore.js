@@ -1,7 +1,9 @@
 import { defineStore } from "pinia"
 
 const API_URL = "http://localhost:5000/api/feed";
-const logPre = "Feed Data Store: "
+const logPre = "Feed Data Store: ";
+
+const postBatchSize = 100;
 
 export const feedStore = defineStore("feed", {
     state: () => {
@@ -9,7 +11,7 @@ export const feedStore = defineStore("feed", {
             app_metadata: {},
             scenes: [],
             currentScene: '', 
-            currentCategory: "general",
+            currentCategory: "",
             token: '',
             userID: '',
             initialized: false,
@@ -43,20 +45,20 @@ export const feedStore = defineStore("feed", {
 
             this.initCategories(this.currentScene);
 
-            await this.fetchPosts(100)
+            await this.switchCategory('general')
 
             console.log(logPre + "Successfully initialized data")
             return 'done'
         },
 
-        async fetchPosts(batchSize) {
+        async fetchPosts(postBatchSize) {
             let category = this.getCategory(this.currentCategory); 
 
             // get the current category, and base the batchsize on how many we've already fetched so we don't refetch the same post
             const start = category.posts.length;
-            const end = start + batchSize;
-            console.log(logPre + `Fetching posts with index [${start}, ${end})`)
-            const response = await fetch(`${API_URL}/get_posts/${this.currentScene}/${this.currentCategory}/${start}/${end}`, {
+            const end = start + postBatchSize;
+            console.log(logPre + `Fetching posts with index [${start}, ${end}) for category ${this.currentCategory} of scene ${this.currentScene}`)
+            const response = await fetch(`${API_URL}/get_posts/${this.currentScene}/${encodeURIComponent(this.currentCategory)}/${start}/${end}`, {
                 headers: {
                     "Authorization": `Bearer ${this.token}`
                 }
@@ -116,6 +118,13 @@ export const feedStore = defineStore("feed", {
             }
 
             target.categories = categories;
+        },
+
+        async switchCategory(categoryName) {
+            console.log(logPre + "Switching to category " + categoryName)
+            this.currentCategory = categoryName;
+
+            await this.fetchPosts(100)
         },
 
         // yeah these should be getters, no I won't do that cuz I moved them there and got errors and I don't like that :(

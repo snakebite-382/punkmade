@@ -15,7 +15,7 @@ export default {
 
     data() {
         return {
-            content: 'New Post'
+            content: ''
         }
     },
 
@@ -36,6 +36,8 @@ export default {
                     name: this.feedStore.user.nickname
                 }
             }
+
+            this.content = "" // reset input
 
             // send that to the backend via the store which will destructure and send it
             await this.feedStore.createPost(newPost);

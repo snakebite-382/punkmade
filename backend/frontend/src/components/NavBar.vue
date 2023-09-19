@@ -1,15 +1,17 @@
 <template>
-    <ul class="nav">
-        <li class="nav-item"><router-link to="/">Home</router-link></li>
-        <li class="nav-item"><router-link to="/scenes/">Scenes Manager</router-link></li>
-    </ul>
+    <Nav :items="pages" />
 </template>
 
 <script>
+import Nav from './Nav.vue';
+
 export default {
-    name: 'NavBar'
+    name: 'NavBar',
+    components: {
+        Nav
+    },
+    props: {
+        pages: Array
+    }
 }
 </script>
-
-<style scoped>
-</style>

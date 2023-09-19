@@ -1,17 +1,24 @@
 
 <template>
   <div id="App">
-    <NavBar/>
+    <NavBar :pages="pages"/>
     <router-view></router-view>  
   </div>
 </template>
 
 <script>
 import NavBar from './components/NavBar.vue';
+import { routes } from './router';
 
 export default {
   components: {
     NavBar
+  },
+
+  data() {
+    return {
+      pages: routes
+    }
   }
 }
 </script>

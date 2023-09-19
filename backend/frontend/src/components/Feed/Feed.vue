@@ -1,9 +1,12 @@
 <template>
     <div v-show="!isLoading">
-        <h1>{{ feedStore.currentScene.name }}</h1>
+        <h1 v-if="feedStore.initialized">{{ feedStore.getScene(feedStore.currentScene).name }} : {{ getCatName() }}</h1>
         <AuthButton/> | <button @click="toggleCreatePost">{{ showCreatePost ? "close" : "post something" }}</button> <br/><br/>
         <CreatePost v-show="showCreatePost"/>
-        <Posts v-if="feedStore.initialized"/>
+        <div v-if="feedStore.initialized">
+            <CategoryNav :categories="returnNavCategories()" @nav-item-click="sceneNavClick" />
+            <Posts />
+        </div>
     </div>
     <div v-show="isLoading">
         <FullscreenLoading/>
@@ -16,10 +19,14 @@ import AuthButton from '../AuthButton.vue';
 import Posts from './Posts.vue';
 import FullscreenLoading from '../Loading/Fullscreen.vue';
 import CreatePost from './CreatePost.vue';
+import CategoryNav from './CategoryNav.vue';
 
 // store stuff
 import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
+
+// helper fns
+import { capitalizeFirst } from '../../helper';
 
 export default {
     name: "Feed",
@@ -36,7 +43,8 @@ export default {
         AuthButton,
         Posts,
         FullscreenLoading,
-        CreatePost
+        CreatePost,
+        CategoryNav
     },
 
     computed: {
@@ -61,6 +69,29 @@ export default {
     methods: {
         toggleCreatePost() {
             this.showCreatePost = !this.showCreatePost;
+        },
+
+        getCatName() {
+            let name = this.feedStore.getCategory(this.feedStore.currentCategory).name
+            return capitalizeFirst(name)
+        },
+
+        returnNavCategories() {
+            let categories = this.feedStore.getScene(this.feedStore.currentScene).categories
+
+            categories = categories.map(category => {
+                let newCategory = {
+                    name: category.name,
+                }
+
+                return newCategory
+            })
+
+            return categories
+        },
+
+        sceneNavClick(data) {
+            this.feedStore.switchCategory(data.name)
         }
     },
 }

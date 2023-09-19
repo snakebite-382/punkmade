@@ -12,7 +12,6 @@ async function fetchReverseGeocode(lat, lng) {
     await axios.get(`https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${lng}&apiKey=${process.env.GEO_CODING_API_KEY}`)
     .then((result) => { 
         // the most relevant name is the first feature, and we want the city
-        console.log(result.data.features[0].properties.city)
         locality = result.data.features[0].properties.city
     }).catch(e => {
         console.log(e)
@@ -51,7 +50,6 @@ async function create(req, res) {
 
     if(!newMetadata.hasOwnProperty("preferredScene")) { // if we don't have a preferred scene
         // the one that was just created is preferred
-        console.log("adding preferred")
         newMetadata.preferredScene = createdScene.insertedId
     }
 
