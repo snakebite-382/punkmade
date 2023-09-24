@@ -39,13 +39,8 @@ export const feedStore = defineStore("feed", {
             // gives you the app metadata and scenes
             this.app_metadata = data.app_metadata;
             this.scenes = data.scenes;
-
-            // store current scene
-            this.currentScene = data.app_metadata.preferredScene;
-
-            this.initCategories(this.currentScene);
-
-            await this.switchCategory('general')
+            
+            await this.switchScene(this.app_metadata.preferredScene)
 
             console.log(logPre + "Successfully initialized data")
             return 'done'
@@ -67,7 +62,10 @@ export const feedStore = defineStore("feed", {
             const data = await response.json();
 
             // append all the new posts
-            category.posts = category.posts.concat(data)
+            data.forEach((post, index) => {
+                // adds the posts by index (offset by start index) to make sure the proper posts are in the right place, and overwrite any possible duplications
+                category.posts[index + start] = post;
+            })
             console.log(logPre + "Fetched posts")
         },
 
@@ -110,14 +108,16 @@ export const feedStore = defineStore("feed", {
             let categories = []
             let target = this.getScene(scene)
 
-            for(let i = 0; i < target.categories.length; i++) {
-                categories.push({
-                    name: target.categories[i].toLowerCase(),
-                    posts: []
-                })
+            if(typeof target.categories[0] == 'string') {
+                for(let i = 0; i < target.categories.length; i++) {
+                    categories.push({
+                        name: (target.categories[i]).toLowerCase(),
+                        posts: []
+                    })
+                }
+    
+                target.categories = categories;
             }
-
-            target.categories = categories;
         },
 
         async switchCategory(categoryName) {
@@ -125,6 +125,17 @@ export const feedStore = defineStore("feed", {
             this.currentCategory = categoryName;
 
             await this.fetchPosts(100)
+        },
+
+        async switchScene(id) {
+            console.log(logPre + "Switching to scene " + id);
+
+            this.currentScene = id;
+
+            this.initCategories(this.currentScene);
+
+            await this.switchCategory('general');
+            console.log(logPre + "Successfully switched scenes")
         },
 
         // yeah these should be getters, no I won't do that cuz I moved them there and got errors and I don't like that :(

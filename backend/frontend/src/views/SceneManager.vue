@@ -1,17 +1,17 @@
 <template>
     <div id="Scene-Manager">
-        <CreateScene/>
+        <EnterScene/>
     </div>
 </template>
 
 <script>
-import CreateScene from '../components/ScenesManager/CreateScene.vue';
+import EnterScene from '../components/ScenesManager/EnterScene.vue';
 
 export default {
     name: "SceneManager",
 
     components: {
-        CreateScene,
+        EnterScene,
     },
 }
 </script>

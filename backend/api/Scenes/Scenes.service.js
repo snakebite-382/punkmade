@@ -35,7 +35,44 @@ async function create(req, res) {
     const collection = database.collection("Scenes");
     let createdScene = await collection.insertOne(created); // add the scene
 
-    let newMetadata = await auth0Manager.getUser({id: formData.user.sub});
+    await addUserToScene(formData.user.sub, createdScene.insertedId)
+    
+    res.send(JSON.stringify(true)) // send true if it worked
+}
+
+async function get_locality(req, res) {
+    let latLng = req.params.latlng.split(",")
+    res.send(await fetchReverseGeocode(...latLng)) // this is just so we can send geocode info from our own api without exposing secrets
+}
+
+async function get_scenes(req, res) {
+    await mongo.connect()
+    const database = mongo.db(process.env.DATABASE);
+    const collection = database.collection("Scenes");
+
+    let docs = await collection.find();
+    let scenes = []
+    for await (const doc of docs) {
+        scenes.push({
+            _id: doc._id,
+            name: doc.name,
+            center: doc.center,
+            logo: doc.logo,
+            range: doc.range,
+        })
+    }
+
+    res.send(scenes)
+}
+
+async function join_scene (req, res) {
+    console.log(req.body)
+    await addUserToScene(req.body.userID, req.body.sceneID)
+    res.send(true)
+}
+
+async function addUserToScene(userID, sceneID) {
+    let newMetadata = await auth0Manager.getUser({id: userID});
     // get the user metadata
 
     if(newMetadata.hasOwnProperty("app_metadata")) { // check if user has app metadata
@@ -48,23 +85,23 @@ async function create(req, res) {
         newMetadata.Scenes = [] // add one
     }
 
-    if(!newMetadata.hasOwnProperty("preferredScene")) { // if we don't have a preferred scene
-        // the one that was just created is preferred
-        newMetadata.preferredScene = createdScene.insertedId
+    if(!newMetadata.Scenes.includes(sceneID)) { // if not already in scene
+        if(!newMetadata.hasOwnProperty("preferredScene")) { // if we don't have a preferred scene
+            // the one that was just created is preferred
+            newMetadata.preferredScene = sceneID
+        }
+    
+        newMetadata.Scenes.push(sceneID); // add the scene id to the users scenes
+    
+        await auth0Manager.updateAppMetadata({id: userID}, newMetadata); // update the metadata
+    } else {
+        console.log("IN SCENE")
     }
-
-    newMetadata.Scenes.push(createdScene.insertedId); // add the scene id to the users scenes
-
-    await auth0Manager.updateAppMetadata({id: formData.user.sub}, newMetadata); // update the metadata
-    res.send(JSON.stringify(true)) // send true if it worked
-}
-
-async function get_locality(req, res) {
-    let latLng = req.params.latlng.split(",")
-    res.send(await fetchReverseGeocode(...latLng)) // this is just so we can send geocode info from our own api without exposing secrets
 }
 
 module.exports = {
     create,
-    get_locality
+    get_locality,
+    get_scenes,
+    join_scene
 }

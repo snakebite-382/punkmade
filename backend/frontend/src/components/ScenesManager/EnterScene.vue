@@ -1,0 +1,115 @@
+<template>
+    <div id="Create-Scene">
+        <div class="loaded" v-if="!isLoading">
+            <h1>Create Scene</h1>
+            <CreateMap :center="userLocation" :range="range" @update-pos="handleUpdate"/>
+            <form @submit="handleSubmit" v-if="locationStore.mode === 'create'">
+                <label for="range">Range: </label>
+                <input type="number" id="range" name="range" v-model="range" min="1" max="30">
+                <button type="submit">Submit</button>
+            </form>
+            <button v-if="locationStore.mode === 'join'" @click="handleSubmit">Join {{ locationStore.selectedScene.name }}</button>
+        </div>
+        <FullscreenLoading v-show="isLoading"/>
+    </div>
+</template>
+
+<script>
+import CreateMap from './CreateMap.vue';
+import FullscreenLoading from '../Loading/Fullscreen.vue';
+import { locationStore } from '../../stores/LocationStore';
+import { mapStores } from 'pinia';
+
+export default {
+    name: "CreateScene",
+
+    components: {
+        CreateMap,
+        FullscreenLoading
+    },
+
+    computed: {
+        ...mapStores(locationStore)
+    },
+
+    data() {
+        return {
+            userLocation: [],
+            selectedPos: [],
+            isLoading: true,
+            range: 15,
+            user: this.$auth0.user,
+        }
+    },
+
+    async created() {
+        navigator.geolocation.getCurrentPosition(position=> { // get the users location and save it
+            this.userLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            }
+            this.selectedPos = this.userLocation;
+        }, e => {
+            console.error(e)
+        });
+
+        await this.getScenes();
+
+        this.isLoading = false;
+    },
+
+    methods: {
+        async handleSubmit(e) {
+            e.preventDefault();
+
+            const token = await this.$auth0.getAccessTokenSilently()
+
+            let response;
+
+            if(this.locationStore.mode === 'create') {
+                 // send the create scene request
+                response = await fetch('http://localhost:5000/api/scenes/create/', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        user: this.user,
+                        center: [this.selectedPos.lat, this.selectedPos.lng],
+                        range: this.range,
+                    })
+                })
+            } else {
+                response = await fetch('http://localhost:5000/api/scenes/join', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        userID: this.user.sub,
+                        sceneID: this.locationStore.selectedScene._id
+                    })
+                })
+            }
+
+
+            const data = await response.json();
+
+            if(data) { // if we got back data, it worked!
+                alert(`${this.locationStore.mode}ed!`)
+                this.getScenes()
+            }
+        },
+
+        handleUpdate(update) {
+            this.selectedPos = update;
+        },
+
+        async getScenes() {
+           await this.locationStore.getScenes(this.$auth0.getAccessTokenSilently);
+        }
+    },
+}
+</script>

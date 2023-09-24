@@ -1,32 +1,45 @@
 <template>
-    <ol-vector-layer>
-      <ol-source-vector>
-        <ol-feature>
-          <ol-geom-circle :center="center" :radius="radius"></ol-geom-circle>
-          <ol-style>
-            <ol-style-stroke color="red" :width="3"></ol-style-stroke>
-            <ol-style-fill color="rgba(255,200,0,0.2)"></ol-style-fill>
-          </ol-style>
-        </ol-feature>
+<div class="circle">
+  <GMapCircle  
+    :center="center"
+    :radius="radius"
 
-        <ol-feature>
-          <ol-geom-circle :center="center" :radius="0.0025"></ol-geom-circle>
-          <ol-style>
-            <ol-style-stroke color="red" :width="3"></ol-style-stroke>
-            <ol-style-fill color="red"></ol-style-fill>
-          </ol-style>
-        </ol-feature>
-      </ol-source-vector>
-    </ol-vector-layer>
+    :options="{
+      fillColor: fill,
+      fillOpacity: 0.5,
+      strokeColor: accent,
+      strikeOpacity: 1
+    }"
+
+  @click="e => $emit('circle-clicked', e)"
+  />
+  <GMapCircle
+    :center="center"
+    :radius="radius/50"
+
+    :options="{
+      fillColor: accent,
+      fillOpacity: 1,
+      strokeColor: accent,
+      strikeOpacity: 1
+    }"
+    @click="e => $emit('circle-clicked', e)"
+  >
+
+  </GMapCircle>
+</div>
 </template>
-
 <script>
 export default {
     name: "MapCircle",
 
     props: {
-        center: Array,
+        center: Object,
         radius: Number,
-    }
+        fill: String,
+        accent: String
+    },
+
+    emits: ['circle-clicked']
 }
 </script>

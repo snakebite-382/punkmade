@@ -15,7 +15,7 @@ const frontendDir = __dirname + "/frontend/dist";
 const port = process.env.port || 5000;
 
 // security
-const clientOrigins = ["http://localhost:5173"];
+const clientOrigins = ["http://localhost:5173", "http://localhost:5000/"];
 app.use(cors({ origin: clientOrigins }));
 
 // form parsing

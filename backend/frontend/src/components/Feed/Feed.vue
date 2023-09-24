@@ -4,7 +4,8 @@
         <AuthButton/> | <button @click="toggleCreatePost">{{ showCreatePost ? "close" : "post something" }}</button> <br/><br/>
         <CreatePost v-show="showCreatePost"/>
         <div v-if="feedStore.initialized">
-            <CategoryNav :categories="returnNavCategories()" @nav-item-click="sceneNavClick" />
+            <SceneNav :scenes="returnNavScenes()" @nav-item-click="sceneNavClick" id="Scene-Nav"/>
+            <CategoryNav :categories="returnNavCategories()" @nav-item-click="categoriesNavClick" id="Category-Nav"/>
             <Posts />
         </div>
     </div>
@@ -20,6 +21,7 @@ import Posts from './Posts.vue';
 import FullscreenLoading from '../Loading/Fullscreen.vue';
 import CreatePost from './CreatePost.vue';
 import CategoryNav from './CategoryNav.vue';
+import SceneNav from './SceneNav.vue';
 
 // store stuff
 import { feedStore } from '../../stores/FeedStore';
@@ -44,7 +46,8 @@ export default {
         Posts,
         FullscreenLoading,
         CreatePost,
-        CategoryNav
+        CategoryNav,
+        SceneNav
     },
 
     computed: {
@@ -80,18 +83,32 @@ export default {
             let categories = this.feedStore.getScene(this.feedStore.currentScene).categories
 
             categories = categories.map(category => {
-                let newCategory = {
+                return {
                     name: category.name,
                 }
-
-                return newCategory
             })
 
             return categories
         },
 
-        sceneNavClick(data) {
+        returnNavScenes() {
+            let scenes = this.feedStore.scenes
+
+            scenes = scenes.map(scene => {
+                return {
+                    name: scene.name,
+                    id: scene._id
+                }
+            })
+
+            return scenes
+        },
+
+        categoriesNavClick(data) {
             this.feedStore.switchCategory(data.name)
+        },
+        sceneNavClick(data) {
+            this.feedStore.switchScene(data.id)
         }
     },
 }

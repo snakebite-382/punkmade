@@ -1,4 +1,5 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router';
+import { authGuard } from "@auth0/auth0-vue";
 import HomeView from '../views/HomeView.vue';
 import SceneManager from '../views/SceneManager.vue'
 
@@ -11,7 +12,8 @@ export const routes = [
   {
     path: '/scenes/',
     name: 'scene-manager',
-    component: SceneManager
+    component: SceneManager,
+    beforeEnter: authGuard
   }
 ]
 

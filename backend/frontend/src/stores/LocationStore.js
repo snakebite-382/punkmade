@@ -1,16 +1,23 @@
 import { defineStore }from 'pinia'
+import {randColor} from "../helper"
 
-const logPre = "Location Cache Store: "
+const logPre = "Location Cache Store: ";
+const API = "http://localhost:5000/api/scenes"
 
 export const locationStore = defineStore('location', {
     state: () => {
         return {
-            cachedLocalities: []
+            cachedLocalities: [],
+            coords: [],
+            scenes: [],
+            selectedScene: {},
+            mode: 'create'
         }
     },
 
     actions: {
         cacheLocality(lat, lng, name) {
+            this.coords = [lat, lng]
             // check if its already cached
             let inCache = this.checkCache(lat, lng);
             if(!inCache) { // if not add it
@@ -40,5 +47,37 @@ export const locationStore = defineStore('location', {
             console.log(logPre + "Not Stored")
             return false
         },
+
+        async getScenes(tokenfn) {
+            console.log(logPre + "Fetching Scenes")
+            let token = await tokenfn();
+
+            let response = await fetch(API + "/get_scenes", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            })
+
+            let data = await response.json();
+
+            this.scenes = data;
+            this.scenes.forEach(scene => {
+                scene.color = randColor();
+                scene.accent = randColor()
+            });
+            // add caching
+        },
+
+        setScene(scene) {
+            console.log(logPre + "Selected: " + scene._id);
+            this.selectedScene = scene;
+            this.mode = 'join';
+        },
+
+        unselect() {
+            console.log(logPre + "Unselecting");
+            this.selectedScene = {};
+            this.mode = 'create';
+        }  
     }
 })

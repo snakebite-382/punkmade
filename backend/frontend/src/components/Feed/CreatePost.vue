@@ -1,7 +1,7 @@
 <template>
     <form @submit="onSubmit">
         <label for="content-input">Content:</label>
-        <input type="text" name="content" id="content-input" v-model="content">
+        <input type="text" name="content" id="content-input" v-model="content" autocomplete="off">
         <button type="submit">post</button>
     </form>
 </template>
