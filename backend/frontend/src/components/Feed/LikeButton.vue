@@ -12,9 +12,3 @@ export default {
     emits: ["post-liked"]
 }
 </script>
-
-<style scoped> 
-svg {
-   margin-bottom: -5px;
-}
-</style>

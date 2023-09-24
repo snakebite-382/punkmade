@@ -1,6 +1,6 @@
 const auth0Manager = require("../managementAPI");
 const { mongo, ObjectId } = require("../mongo");
-const { Post, Like } = require("../../objects/Scene.object");
+const { Post, Like, Comment } = require("../../objects/Scene.object");
 
 async function get_init_feed_data(req, res) {
     let data = {};
@@ -76,6 +76,9 @@ async function getPosts(req, res) {
     }
 }
 
+// all these create functions use almost exactly the same code just to different depths, so I should turn this into 
+// a series of functions to edit things within a scene, category, or post
+
 async function createPost(req, res) {
     const formData = req.body;
     const newPost = new Post(formData.creator, formData.content, formData.type) // create a new post
@@ -92,7 +95,7 @@ async function createPost(req, res) {
 
     newCategories.forEach(cat => { // for each category in the scene
         if(cat.name.toLowerCase() == formData.category.toLowerCase()) { // if it's the right one
-            cat.posts.push(newPost); // add the post
+            cat.posts.unshift(newPost); // add the post
         }
     })
 
@@ -102,8 +105,6 @@ async function createPost(req, res) {
 }
 
 async function likePost(req, res) {
-    console.log("liking");
-    console.log(req.body)
     await mongo.connect()
     const database = mongo.db(process.env.DATABASE);
     const collection = database.collection("Scenes");
@@ -119,7 +120,6 @@ async function likePost(req, res) {
     newCategories.forEach(cat => { // for each category in the scene
         if(cat.name.toLowerCase() == req.body.category.toLowerCase()) { // if it's the right one
             cat.posts.forEach(post => { // got through each post
-                console.log(post.id)
                 if(post.id === req.body.postID) { // if its the selected post
                     let unliking = false;
                     let existingIndex = -1;
@@ -145,7 +145,41 @@ async function likePost(req, res) {
 
     let result = await collection.updateOne(filter, {$set: {categories: newCategories}})
 
-    console.log(edittedPost)
+    res.send(edittedPost)
+}
+
+async function createComment(req, res) {
+    console.log(req.body)
+    await mongo.connect()
+    const database = mongo.db(process.env.DATABASE);
+    const collection = database.collection("Scenes");
+
+    const filter = {_id: new ObjectId(req.body.sceneID)};
+
+    let oldScene = await collection.findOne(filter);
+
+    let newCategories = oldScene.categories;
+
+    let edittedPost;
+
+    newCategories.forEach(cat => { // for each category in the scene
+        if(cat.name.toLowerCase() == req.body.category.toLowerCase()) { // if it's the right one
+            cat.posts.forEach(post => { // got through each post
+                if(post.id === req.body.parents[0]) { // if its the selected post
+                    if(req.body.parents.length === 1) {// if we're just selecting the post
+                        let newComment = new Comment(req.body.comment.creator, req.body.comment.content)
+                        post.comments.unshift(newComment);
+                    } else { // uh oh its a reply fuck shit time
+
+                    }
+
+                    edittedPost = post;
+                }
+            })
+        }
+    })
+
+    let result = await collection.updateOne(filter, {$set: {categories: newCategories}})
 
     res.send(edittedPost)
 }
@@ -154,5 +188,6 @@ module.exports = {
     get_init_feed_data,
     getPosts,
     createPost,
-    likePost
+    likePost,
+    createComment
 }

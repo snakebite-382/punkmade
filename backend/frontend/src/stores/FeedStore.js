@@ -77,8 +77,10 @@ export const feedStore = defineStore("feed", {
 
             // store that the post is posting so it shows up as such
             post.posting = true;
-            const postIndex = this.getPosts().length // store where it is(in case new posts are added so we can still remove it)
-            this.getPosts().push(post); // add the new post to the posts array
+            post.likes = [];
+            post.comments = [];
+            const postIndex = 0 // store where it is(in case new posts are added so we can still remove it)
+            this.getPosts().unshift(post); // add the new post to the posts array
 
             post.scene = this.currentScene; // store more post data
             post.category = this.currentCategory
@@ -133,7 +135,7 @@ export const feedStore = defineStore("feed", {
                 // rollback the optimistic change
                 this.getPosts()[postIndex].liked = !this.getPosts()[postIndex].liked;
             } else {
-                console.log(logPre + "Successfully liked post")
+                console.log(logPre + "Successfully liked/unliked post")
                 // otherwise, overwrite the existing post with the one returned
                 const data = await response.json()
                 data.liked = this.checkIfPostLiked(data)
@@ -151,6 +153,54 @@ export const feedStore = defineStore("feed", {
             })
 
             return liked;
+        },
+
+        getPostById(id) {
+            let result;
+            this.getPosts().forEach((post, index) => {
+                if(post.id === id) {
+                    result = {
+                        post,
+                        index
+                    }
+                }
+            })
+
+            return result
+        },
+
+        async createComment(content, parents) {
+            let post = this.getPostById(parents[0]);
+            let postIndex = post.index;
+            post = post.post;
+
+            console.log(logPre + `Commenting: ${content} on post of index: ${postIndex}`)
+
+            let newComment = {
+                content: content,
+                creator: {id: this.user.sub, name: this.user.nickname},
+                id: 0,
+                replies: [],
+                likes: [],
+            }
+
+            let response = await fetch(`${API_URL}/create_comment/`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': "application/json",
+                    "Authorization": `Bearer ${this.token}`
+                },
+                body: JSON.stringify({
+                    sceneID: this.currentScene,
+                    category: this.currentCategory,
+                    parents: parents,
+                    comment: newComment
+                })
+            })
+
+            let data = await response.json();
+
+            this.getPosts()[postIndex] = data;
         },
 
         initCategories(scene) {

@@ -1,9 +1,9 @@
 const { v4: uuid } = require("uuid");
 
 const defaultCategories = [
-    "General",
-    "Art/Music",
-    "Political"
+    "general",
+    "art/Music",
+    "political"
 ]
 
 class votingEntry { // to be implemented
@@ -34,6 +34,7 @@ class Comment { //to be implemented
     timestamp;
     id;
     replies;
+    likes;
 
     constructor(creator, content) {
         this.content = content;
@@ -41,6 +42,7 @@ class Comment { //to be implemented
         this.timestamp = Date();
         this.id = uuid();
         this.replies = []; // to be implemented
+        this.likes = [];
     }
 }
 
