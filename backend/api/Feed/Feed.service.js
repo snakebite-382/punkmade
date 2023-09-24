@@ -1,6 +1,6 @@
 const auth0Manager = require("../managementAPI");
 const { mongo, ObjectId } = require("../mongo");
-const { Post } = require("../../objects/Scene.object");
+const { Post, Like } = require("../../objects/Scene.object");
 
 async function get_init_feed_data(req, res) {
     let data = {};
@@ -92,7 +92,7 @@ async function createPost(req, res) {
 
     newCategories.forEach(cat => { // for each category in the scene
         if(cat.name.toLowerCase() == formData.category.toLowerCase()) { // if it's the right one
-            cat.posts.push(newPost); // at the post
+            cat.posts.push(newPost); // add the post
         }
     })
 
@@ -101,8 +101,58 @@ async function createPost(req, res) {
     res.send(newPost) // send the new post
 }
 
+async function likePost(req, res) {
+    console.log("liking");
+    console.log(req.body)
+    await mongo.connect()
+    const database = mongo.db(process.env.DATABASE);
+    const collection = database.collection("Scenes");
+
+    const filter = {_id: new ObjectId(req.body.sceneID)};
+
+    let oldScene = await collection.findOne(filter);
+
+    let newCategories = oldScene.categories;
+
+    let edittedPost;
+
+    newCategories.forEach(cat => { // for each category in the scene
+        if(cat.name.toLowerCase() == req.body.category.toLowerCase()) { // if it's the right one
+            cat.posts.forEach(post => { // got through each post
+                console.log(post.id)
+                if(post.id === req.body.postID) { // if its the selected post
+                    let unliking = false;
+                    let existingIndex = -1;
+
+                    post.likes.forEach(like => { // check if the user already has a like for this post
+                        if(like.likedBy === req.body.userID) {
+                            unliking = true; // if they do we're unliking
+                        }
+                    })
+
+                    if(!unliking) {
+                        let like = new Like(req.body.userID) // create a new like
+                        post.likes.push(like) // and add it to the post likes
+                    } else {
+                        post.likes.splice(existingIndex, 1); //remove the like if unliking
+                    }
+
+                    edittedPost = post;
+                }
+            })
+        }
+    })
+
+    let result = await collection.updateOne(filter, {$set: {categories: newCategories}})
+
+    console.log(edittedPost)
+
+    res.send(edittedPost)
+}
+
 module.exports = {
     get_init_feed_data,
     getPosts,
-    createPost
+    createPost,
+    likePost
 }

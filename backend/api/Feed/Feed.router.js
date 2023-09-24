@@ -1,7 +1,7 @@
 const express = require("express");
 const {checkJwt} = require("../checkjwt");
 
-const {get_init_feed_data, getPosts, createPost} = require("./Feed.service")
+const {get_init_feed_data, getPosts, createPost, likePost} = require("./Feed.service")
 
 const router = express.Router();
 
@@ -20,5 +20,7 @@ router.get("/get_posts/:scene/:category/:indexStart/:indexEnd", checkJwt, getPos
 // takes in scene, category, content, user, type
 // returns the newPost = {Post}
 router.post("/create_post/", checkJwt, createPost)
+
+router.post('/like_post/', checkJwt, likePost)
 
 module.exports = router;

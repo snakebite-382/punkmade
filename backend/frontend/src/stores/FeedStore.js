@@ -13,7 +13,7 @@ export const feedStore = defineStore("feed", {
             currentScene: '', 
             currentCategory: "",
             token: '',
-            userID: '',
+            user: {},
             initialized: false,
         }
     },
@@ -63,7 +63,10 @@ export const feedStore = defineStore("feed", {
 
             // append all the new posts
             data.forEach((post, index) => {
-                // adds the posts by index (offset by start index) to make sure the proper posts are in the right place, and overwrite any possible duplications
+                // check if we've liked the post
+                post.liked = this.checkIfPostLiked(post)
+
+                // adds the posts by index (offset by start index) to make sure the proper posts are in the right place, and overwrite any possible duplication
                 category.posts[index + start] = post;
             })
             console.log(logPre + "Fetched posts")
@@ -101,6 +104,54 @@ export const feedStore = defineStore("feed", {
                 this.getPosts()[postIndex] = data
             }
         }, 
+
+        async likePost(postIndex, postID) {
+            console.log(logPre + "Liking/Unliking post of index " + postIndex)
+
+            // optimistically like post
+            let category = this.getCategory(this.currentCategory)
+            this.getPosts()[postIndex].liked = !this.getPosts()[postIndex].liked;
+            
+            // send the request to update posts liked (use post id NOT index to avoid errors with out of sync client)
+            const response = await fetch(`${API_URL}/like_post/`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': "application/json",
+                    "Authorization": `Bearer ${this.token}`
+                },
+                body: JSON.stringify({
+                    sceneID: this.currentScene,
+                    category: this.currentCategory,
+                    postID: postID,
+                    userID: this.user.sub
+                })
+            })
+
+            if(response.status !==200) {
+                // if we didn't get the ok
+                console.log(logPre + "Error liking post, unrolling optimistic update, status: " + response.status)
+                // rollback the optimistic change
+                this.getPosts()[postIndex].liked = !this.getPosts()[postIndex].liked;
+            } else {
+                console.log(logPre + "Successfully liked post")
+                // otherwise, overwrite the existing post with the one returned
+                const data = await response.json()
+                data.liked = this.checkIfPostLiked(data)
+                this.getPosts()[postIndex] = data
+            }
+        },
+
+        checkIfPostLiked(post) {
+            let liked = false;
+
+            post.likes.forEach(like => {
+                if(like.likedBy === this.user.sub) {
+                    liked = true
+                }
+            })
+
+            return liked;
+        },
 
         initCategories(scene) {
             // just goes through the categories and converts it from a list of names to a name posts pair

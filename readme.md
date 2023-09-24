@@ -21,13 +21,13 @@ Social media for punk shit. Somewhere to post about shows, sewing tips etc witho
   * [ ] prevent users from making duplicate scenes
   * [ ] deal with overlapping scenes
   * [ ] more customization/better scene creation
-* [ ] join a scene
-* [ ] Create posts
+* [x] join a scene
+* [x] Create posts
   * [ ] image and mixed media posts
   * [ ] likes
   * [ ] comments
 * [ ] create categories
-* [ ] voting (these last two are related ;) 
+* [ ] voting (these last two are related ;)
 
 ## Accounts
 

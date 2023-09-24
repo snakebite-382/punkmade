@@ -1,7 +1,7 @@
 <template>
     <div id="Posts">
-        <div class="post" :key="post.id" v-for="post in feedStore.getPosts()">
-            <Post :post="post"/>
+        <div class="post" :key="post.id" v-for="(post, index) in feedStore.getPosts()">
+            <Post :post="post" @post-liked="() => likePost(index, post.id)"/>
         </div>
     </div>
 </template>
@@ -21,6 +21,12 @@ export default {
     computed: {
         ...mapStores(feedStore)
     },
+
+    methods: {
+        async likePost(postIndex, postID) {
+            await this.feedStore.likePost(postIndex, postID)
+        }
+    }
 }
 
 </script>

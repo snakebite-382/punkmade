@@ -21,12 +21,27 @@ class SceneUser {
     }
 }
 
-class Like { // to be implemented
-
+class Like {
+    likedBy
+    constructor(userID) {
+        this.likedBy = userID
+    }
 }
 
 class Comment { //to be implemented
+    content;
+    creator;
+    timestamp;
+    id;
+    replies;
 
+    constructor(creator, content) {
+        this.content = content;
+        this.creator = creator;
+        this.timestamp = Date();
+        this.id = uuid();
+        this.replies = []; // to be implemented
+    }
 }
 
 class Post {
@@ -92,4 +107,6 @@ module.exports = {
     Category,
     Post,
     SceneUser,
+    Like,
+    Comment,
 };
