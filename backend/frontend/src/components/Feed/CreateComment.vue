@@ -1,5 +1,5 @@
 <template>
-    <form class="add-comment" @submit="handleSubmit">
+    <form class="add-comment" @submit="handleSubmit" v-if="feedStore.newCommentParents[0].localeCompare(postID) === 0">
         <input placeholder="comment" type="text" v-model="content"><button type="submit">comment</button>
     </form>
 </template>
@@ -15,17 +15,20 @@ export default {
             content: ''
         }
     },
+    props: {
+        postID: String,
+    },
     computed: {
         ...mapStores(feedStore)
-    },
-    props: {
-        parents: Array
     },
     methods: {
         handleSubmit(e) {
             e.preventDefault();
-            this.feedStore.createComment(this.content, this.parents)
+            this.feedStore.createComment(this.content, this.feedStore.newCommentParents)
         }
-    }
+    },
+    created() {
+        this.feedStore.setupCommentParents(this.postID, [])
+    },
 }
 </script>

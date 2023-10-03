@@ -1,25 +1,28 @@
 <template>
-    <div class="comments">
+    <div class="comments" @click="onClick">
         <h4 v-show="comments.length === 0">comments go here</h4>
-        <Comment v-for="comment in comments" :comment="comment" :key="comment.id" :depth="currentDepth" :maxDepth="maxDepth"/>
-        <CreateComment :parents="newCommentParents"/> 
+        <Comment v-for="comment in comments" :comment="comment" :key="comment.id" :depth="currentDepth" :maxDepth="maxDepth" :parents="[]" :postID="postID"/>
+        <CreateComment :postID="postID"/> 
     </div>
 </template>
 
 <script>
 import Comment from './Comment.vue';
 import CreateComment from './CreateComment.vue';
+import { feedStore } from '../../stores/FeedStore';
+import { mapStores } from 'pinia';
 
 export default {
     name: "CommentSection",
     data() {
         return {
-            newCommentParents: [this.postID],
-// parents tell our create comment where to append the comment, first el is post id then we go through each id in the array, find the comment and then look for the following ids under it
             currentDepth: 0,
             maxDepth: 3,
             // even though our replies can be addedto essentially infinite depths, at depth 3 we flatten everything
         }
+    },
+    computed: {
+        ...mapStores(feedStore)
     },
     props: {
         comments: Array,
@@ -29,5 +32,12 @@ export default {
         Comment,
         CreateComment
     },
+    methods: {
+        onClick() {
+            if(this.feedStore.newCommentParents[0].localeCompare(this.postID) !== 0) {
+                this.feedStore.setupCommentParents(this.postID, [])
+            }
+        }
+    }
 }
 </script>

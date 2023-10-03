@@ -149,7 +149,6 @@ async function likePost(req, res) {
 }
 
 async function createComment(req, res) {
-    console.log(req.body)
     await mongo.connect()
     const database = mongo.db(process.env.DATABASE);
     const collection = database.collection("Scenes");
@@ -166,11 +165,21 @@ async function createComment(req, res) {
         if(cat.name.toLowerCase() == req.body.category.toLowerCase()) { // if it's the right one
             cat.posts.forEach(post => { // got through each post
                 if(post.id === req.body.parents[0]) { // if its the selected post
+                    let newComment = new Comment(req.body.comment.creator, req.body.comment.content)
                     if(req.body.parents.length === 1) {// if we're just selecting the post
-                        let newComment = new Comment(req.body.comment.creator, req.body.comment.content)
                         post.comments.unshift(newComment);
                     } else { // uh oh its a reply fuck shit time
+                        let lastTargetReplies = post.comments; // this variable will store the list of replies to search through for the next target
+                        for(let i = 1; i < req.body.parents.length; i++) { // the 0th element(just a post id to comment on post) is dealt with in the previos if so start with first comment
+                            for(let j = 0; j < lastTargetReplies.length; i++) {
+                                if(lastTargetReplies[j].id.localeCompare(req.body.parents[i])){ // if the id at the current search index j is equal to the id we're looking for in the parents array at index i 
+                                    lastTargetReplies = lastTargetReplies[j].replies; // then the next list to look through is their replies
+                                }
+                            }
+                        }
 
+                        // finally our lastTargetReplies will point to the replies of the comment we're looking for
+                        lastTargetReplies.unshift(newComment)
                     }
 
                     edittedPost = post;

@@ -15,6 +15,7 @@ export const feedStore = defineStore("feed", {
             token: '',
             user: {},
             initialized: false,
+            newCommentParents: [''],
         }
     },
 
@@ -237,6 +238,12 @@ export const feedStore = defineStore("feed", {
 
             await this.switchCategory('general');
             console.log(logPre + "Successfully switched scenes")
+        },
+
+        setupCommentParents(postID = this.newCommentParents[0], parents = this.newCommentParents.slice(1)) {
+            let newParents = [postID].concat(parents)
+            console.log(logPre + "Setting up comment parents " + JSON.stringify(newParents))
+            this.newCommentParents = newParents
         },
 
         // yeah these should be getters, no I won't do that cuz I moved them there and got errors and I don't like that :(
