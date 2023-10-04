@@ -171,8 +171,9 @@ async function createComment(req, res) {
                     } else { // uh oh its a reply fuck shit time
                         let lastTargetReplies = post.comments; // this variable will store the list of replies to search through for the next target
                         for(let i = 1; i < req.body.parents.length; i++) { // the 0th element(just a post id to comment on post) is dealt with in the previos if so start with first comment
-                            for(let j = 0; j < lastTargetReplies.length; i++) {
-                                if(lastTargetReplies[j].id.localeCompare(req.body.parents[i])){ // if the id at the current search index j is equal to the id we're looking for in the parents array at index i 
+                            for(let j = 0; j < lastTargetReplies.length; j++) {
+                                console.log("CHECKING IDs")
+                                if(lastTargetReplies[j].id.localeCompare(req.body.parents[i]) === 0){ // if the id at the current search index j is equal to the id we're looking for in the parents array at index i 
                                     lastTargetReplies = lastTargetReplies[j].replies; // then the next list to look through is their replies
                                 }
                             }

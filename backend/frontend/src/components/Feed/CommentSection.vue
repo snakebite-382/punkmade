@@ -1,7 +1,7 @@
 <template>
     <div class="comments" @click="onClick">
         <h4 v-show="comments.length === 0">comments go here</h4>
-        <Comment v-for="comment in comments" :comment="comment" :key="comment.id" :depth="currentDepth" :maxDepth="maxDepth" :parents="[]" :postID="postID"/>
+        <Comment v-for="comment in comments" :comment="comment" :key="comment.id" :depth="currentDepth" :parents="[]" :postID="postID"/>
         <CreateComment :postID="postID"/> 
     </div>
 </template>
@@ -17,7 +17,6 @@ export default {
     data() {
         return {
             currentDepth: 0,
-            maxDepth: 3,
             // even though our replies can be addedto essentially infinite depths, at depth 3 we flatten everything
         }
     },

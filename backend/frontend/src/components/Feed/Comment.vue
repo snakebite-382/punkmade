@@ -2,6 +2,9 @@
     <div class="comment">
         {{ comment.creator.name }}: {{ comment.content }}
         <button @click="handleReply">{{ (isReplying()) ? 'stop replying' : 'reply'}}</button>
+        <div :class="'replies ' + (depth > maxReplyDepth ? 'flattened' : 'unflattened') ">
+            <Comment v-for="reply in comment.replies" :comment="reply" :key="reply.id" :depth="depth + 1" :parents="expectedParents.slice(1)" :postID="postID"/>
+        </div>
     </div>
 </template>
 
@@ -13,7 +16,8 @@ export default {
     name: "Comment",
     data() {
         return {
-            expectedParents: [this.postID, ...this.parents, this.comment.id]
+            expectedParents: [this.postID, ...this.parents, this.comment.id],
+            maxReplyDepth: 3
         }
     },
     computed: {
@@ -22,7 +26,6 @@ export default {
     props: {
         comment: Object,
         depth: Number,
-        maxDepth: Number,
         parents: Array,
         postID: String,
     },
@@ -39,7 +42,14 @@ export default {
             } else {
                 this.feedStore.setupCommentParents(this.postID, []);
             }
-        }
-    }
+        },
+    },
+
 }
 </script>
+
+<style scoped>
+.replies.unflattened { 
+    margin-left: 10px;
+}
+</style>
