@@ -3,7 +3,7 @@ const auth0Manager = require('../managementAPI');
 const {dbDriver} = require('../db')
 
 async function loggedin(req, res) {
-    let userID = req.params.userID;
+    let userID = req.auth.payload.sub
     let driver = await dbDriver;
 
     let auth0User = await auth0Manager.getUser({id: userID})
