@@ -5,6 +5,6 @@ const router = express.Router();
 
 const {loggedin} = require('./Users.service')
 
-router.get('/loggedin/:userID', checkJwt, loggedin)
+router.get('/loggedin/', checkJwt, loggedin)
 
 module.exports = router
