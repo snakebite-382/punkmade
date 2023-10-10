@@ -52,8 +52,9 @@ async function create(req, res) {
 
     await dbDriver.executeQuery(
         `MATCH (user:USER {authID: $authID}) 
-        MERGE (user)-[:PART_OF]->(scene:SCENE {name: $sceneName}) 
+        MERGE (scene:SCENE {name: $sceneName}) 
         SET scene.center = $center, scene.range = $range
+        CREATE (user)-[:PART_OF]->(scene)
         CREATE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'general'})
         CREATE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'art/music'}) 
         CREATE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'political'})`,
