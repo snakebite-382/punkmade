@@ -55,9 +55,9 @@ async function create(req, res) {
         MERGE (scene:SCENE {name: $sceneName}) 
         SET scene.center = $center, scene.range = $range
         CREATE (user)-[:PART_OF]->(scene)
-        CREATE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'general'})
-        CREATE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'art/music'}) 
-        CREATE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'political'})`,
+        MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'general'})
+        MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'art/music'}) 
+        MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'political'})`,
         {
             authID: userID,
             sceneName: name,
