@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { authGuard } from "@auth0/auth0-vue";
 import HomeView from '../views/HomeView.vue';
-import SceneManager from '../views/SceneManager.vue'
+import SceneManager from '../views/SceneManager.vue';
+import LoginCallback from '../views/LoginCallback.vue'
 
 export const routes = [
   {
@@ -14,7 +15,17 @@ export const routes = [
     name: 'scene-manager',
     component: SceneManager,
     beforeEnter: authGuard
+  },
+  {
+    path:'/login-callback',
+    name: 'login-callback',
+    component: LoginCallback
   }
+]
+
+let navRoutes = [
+  routes[0],
+  routes[1]
 ]
 
 const router = createRouter({
@@ -22,4 +33,5 @@ const router = createRouter({
   routes,
 })
 
+export {navRoutes}
 export default router

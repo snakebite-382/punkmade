@@ -10,6 +10,7 @@
         </div>
     </div>
     <div v-show="isLoading">
+        <AuthButton/>
         <FullscreenLoading/>
     </div>
 </template>
@@ -97,7 +98,7 @@ export default {
             scenes = scenes.map(scene => {
                 return {
                     name: scene.name,
-                    id: scene._id
+                    id: scene.name
                 }
             })
 

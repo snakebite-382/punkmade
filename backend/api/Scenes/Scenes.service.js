@@ -1,10 +1,31 @@
 const axios = require("axios");
-const retry = require("axios-retry");
 const auth0Manager = require("../managementAPI");
 
-const { mongo } = require("../mongo");
-
 const { Scene } = require("../../objects/Scene.object");
+const { dbDriver } = require("../db");
+
+async function preferredSceneChecking(userID, sceneName) {
+    const {records} = await dbDriver.executeQuery(
+        'MATCH (user:USER {authID: $authID})-[rel:PREFERRED_SCENE]->(:SCENE) return rel',
+        {
+            authID: userID
+        },
+        {database: "neo4j"}
+    )
+
+    if(records.length === 0) {
+        await dbDriver.executeQuery(
+            `MATCH (user:USER {authID: $authID}) 
+            MATCH (scene:SCENE {name: $name}) 
+            CREATE (user)-[:PREFERRED_SCENE]->(scene)`,
+            {
+                authID: userID,
+                name: sceneName,
+            },
+            {database: 'neo4j'}
+        )
+    }
+}
 
 async function fetchReverseGeocode(lat, lng) {
     // reverse geocode coords
@@ -27,17 +48,27 @@ async function create(req, res) {
     let name = await fetchReverseGeocode(...formData.center); 
     name = name.locality + " Punk"
 
-    // create a new scene object
-    let created = new Scene(name, formData.user, formData.center, formData.range)
+    let userID = req.auth.payload.sub;
 
-    await mongo.connect();
-    const database = mongo.db(process.env.DATABASE);
-    const collection = database.collection("Scenes");
-    let createdScene = await collection.insertOne(created); // add the scene
+    await dbDriver.executeQuery(
+        `MATCH (user:USER {authID: $authID}) 
+        MERGE (user)-[:PART_OF]->(scene:SCENE {name: $sceneName}) 
+        SET scene.center = $center, scene.range = $range
+        CREATE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'general'})
+        CREATE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'art/music'}) 
+        CREATE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'political'})`,
+        {
+            authID: userID,
+            sceneName: name,
+            center: formData.center,
+            range: formData.range
+        },
+        {database: 'neo4j'}
+    )
 
-    await addUserToScene(formData.user.sub, createdScene.insertedId)
+    await preferredSceneChecking(userID, name)
     
-    res.send(JSON.stringify(true)) // send true if it worked
+    res.send(true) // send true if it worked
 }
 
 async function get_locality(req, res) {
@@ -46,57 +77,40 @@ async function get_locality(req, res) {
 }
 
 async function get_scenes(req, res) {
-    await mongo.connect()
-    const database = mongo.db(process.env.DATABASE);
-    const collection = database.collection("Scenes");
 
-    let docs = await collection.find();
+    const {records} = await dbDriver.executeQuery(
+        'MATCH (scene:SCENE) RETURN scene.name, scene.center, scene.range',
+        {},
+        {database: 'neo4j'}
+    )
+
     let scenes = []
-    for await (const doc of docs) {
+
+    records.forEach(record => {
         scenes.push({
-            _id: doc._id,
-            name: doc.name,
-            center: doc.center,
-            logo: doc.logo,
-            range: doc.range,
+            name: record.get('scene.name'),
+            center: record.get('scene.center'),
+            range: record.get('scene.range')
         })
-    }
+    })
 
     res.send(scenes)
 }
 
 async function join_scene (req, res) {
-    console.log(req.body)
-    await addUserToScene(req.body.userID, req.body.sceneID)
+    let userID = req.auth.payload.sub;
+
+    await dbDriver.executeQuery(
+        "MATCH (user:USER {authID: $authID}) MATCH (scene:SCENE {name: $sceneName}) MERGE (user)-[:PART_OF]->(scene)",
+        {
+            authID: userID, 
+            sceneName: req.body.sceneName},
+        {database: 'neo4j'}
+    )
+
+    await preferredSceneChecking(userID, req.body.sceneName)
+
     res.send(true)
-}
-
-async function addUserToScene(userID, sceneID) {
-    let newMetadata = await auth0Manager.getUser({id: userID});
-    // get the user metadata
-
-    if(newMetadata.hasOwnProperty("app_metadata")) { // check if user has app metadata
-        newMetadata = newMetadata.app_metadata; // if it doesn't add it
-    } else {
-        newMetadata = {}
-    }
-    
-    if(!newMetadata.hasOwnProperty("Scenes")) { //if the metadata doesn't have a scenes array
-        newMetadata.Scenes = [] // add one
-    }
-
-    if(!newMetadata.Scenes.includes(sceneID)) { // if not already in scene
-        if(!newMetadata.hasOwnProperty("preferredScene")) { // if we don't have a preferred scene
-            // the one that was just created is preferred
-            newMetadata.preferredScene = sceneID
-        }
-    
-        newMetadata.Scenes.push(sceneID); // add the scene id to the users scenes
-    
-        await auth0Manager.updateAppMetadata({id: userID}, newMetadata); // update the metadata
-    } else {
-        console.log("IN SCENE")
-    }
 }
 
 module.exports = {

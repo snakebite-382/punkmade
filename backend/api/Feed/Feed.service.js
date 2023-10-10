@@ -1,197 +1,244 @@
 const auth0Manager = require("../managementAPI");
-const { mongo, ObjectId } = require("../mongo");
 const { Post, Like, Comment } = require("../../objects/Scene.object");
+const {dbDriver} = require('../db')
+
+async function postNodeToPostObject(post, author) {
+    let id = post.get('postID').toNumber();
+
+    const {records : commentRecords} = await dbDriver.executeQuery(
+        `MATCH p = (post:POST)<-[:COMMENTED_ON]-(:COMMENT)-[:REPLIED_TO|COMMENTED_ON *0..]-(:COMMENT)
+        WHERE ID(post) = $postID
+        WITH COLLECT(p) AS paths
+        CALL apoc.convert.toTree(paths) YIELD value
+        RETURN value`,
+        {
+            postID: id,
+        },
+        {database: 'neo4j'}
+    )
+    console.log(commentRecords[0].get('value'))
+
+    return {
+        content: post.get('content'),
+        type: post.get('type'),
+        timestamp: post.get('timestamp'),
+        author,
+        likes: post.get('likes').toNumber(),
+        liked: post.get('liked').toNumber() === 1 ? true : false,
+        postID: id,
+        comments: []
+    }
+}
 
 async function get_init_feed_data(req, res) {
-    let data = {};
+    let userID = req.auth.payload.sub
 
-    //get the app metadata
-    let userData = await auth0Manager.getUser({id: req.params.user_id})
-    userData = userData.app_metadata
-
-    // add to returned data
-    data.app_metadata = userData;
-
-    //get scene details from metadata
-    let populatedList = await populateSceneIDListWithBasics(userData.Scenes);
-    // store on return data
-    data.scenes = populatedList;
-    
     // send it
+    const {records : prefSceneRels} = await dbDriver.executeQuery(
+        'MATCH (:USER {authID: $authID})-[:PREFERRED_SCENE]->(scene:SCENE) RETURN scene.name as preferredScene',
+        {
+            authID: userID,
+        },
+        {database: 'neo4j'}
+    )
+
+    let preferredScene = prefSceneRels[0].get('preferredScene');
+
+    const {records: sceneRecords} = await dbDriver.executeQuery(
+        `MATCH (:USER {authID: $authID})-[:PART_OF]->(scene:SCENE)-[:HAS_CATEGORY]->(category:CATEGORY) 
+        RETURN scene.name as name, scene.center as center, scene.range as range, COLLECT(category)`,
+        {
+            authID: userID
+        },
+        {database: 'neo4j'}
+    )
+
+    let scenes = [];
+
+    sceneRecords.forEach(scene => {
+        let categoryNodes = scene.get('COLLECT(category)');
+
+        let categories = [];
+
+        categoryNodes.forEach(cat => {
+            categories.push({
+                name: cat.properties.name,
+                posts: []
+            })
+        })
+
+        scenes.push({
+            name: scene.get('name'),
+            center: scene.get('center'),
+            range: scene.get('range'),
+            categories,
+        })
+        
+    })
+
+    let data = {
+        preferredScene,
+        scenes,
+    }
+
     res.send(data);
 }
 
-async function populateSceneIDListWithBasics(ids) {
-    let data = [];
-
-    await mongo.connect();
-    const database = mongo.db(process.env.DATABASE);
-    const collection = database.collection("Scenes");
-    
-    for(let i = 0; i<ids.length; i++) { // for each id in the passed in array
-        // get the scene
-        let scene = await collection.findOne({_id: new ObjectId(ids[i])})
-
-        let cats = [];
-
-        scene.categories.forEach(cat => { // add just the category name (posts is unnecessary and long)
-            cats.push(cat.name)
-        })
-
-        let basics = { // set a basics object with just the necessary information
-            name: scene.name,
-            _id: scene._id,
-            center: scene.center,
-            logo: scene.logo,
-            range: scene.range,
-            categories: cats,
-        }
-
-        data.push(basics) // add it to the returned array
-    }
-
-    return data; // return back the list of populated scenes
-}
-
 async function getPosts(req, res) {
-    if(typeof req.params.scene === "string" && typeof req.params.category === "string") { // if params are valid
-        await mongo.connect();
-        const database = mongo.db(process.env.DATABASE);
-        const collection = database.collection("Scenes");
+    let userID = req.auth.payload.sub;
 
-        let scene = await collection.findOne({_id: new ObjectId(req.params.scene)}) // find requested scene
+    req.params.start = parseInt(req.params.start)
+    req.params.end = parseInt(req.params.end)
 
-        let posts = [];
+    const {records: postRecords} = await dbDriver.executeQuery(
+        `MATCH (user:USER {authID: $authID})-[:PART_OF]->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]->(:CATEGORY {name: $categoryName})<-[]-(post:POST) 
+        OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
+        OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
+        RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user), COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID
+        ORDER BY timestamp DESC
+        SKIP toInteger($skip)
+        LIMIT toInteger($limit)`,
+        {
+            authID: userID,
+            sceneName: req.params.scene,
+            categoryName: req.params.category,
+            skip:req.params.start,
+            limit: req.params.end - req.params.start
+        },
+        {}
+    )
 
-        let requestedCategory = req.params.category.toLowerCase()
+    let posts = []
+    
+    for(let post of postRecords) {
+        let authorNode = post.get("COLLECT(user)")
+        let author = authorNode[0].properties.name
 
-        for(let i = 0; i < scene.categories.length; i++) { //for each category
-            let currentCategory = scene.categories[i].name.toLowerCase()
-            if(currentCategory == requestedCategory) { // if the category is correct
-                posts = scene.categories[i].posts; // get the posts 
-            }
-        }
-
-        res.send(posts.slice(req.params.indexStart, req.params.indexEnd)) // return only the requested slice
+        posts.push(await postNodeToPostObject(post, author))
     }
+        
+    res.send(JSON.stringify(posts))
 }
-
-// all these create functions use almost exactly the same code just to different depths, so I should turn this into 
-// a series of functions to edit things within a scene, category, or post
 
 async function createPost(req, res) {
     const formData = req.body;
-    const newPost = new Post(formData.creator, formData.content, formData.type) // create a new post
+    // const newPost = new Post(formData.creator, formData.content, formData.type) // create a new post
 
-    await mongo.connect();
-    const database = mongo.db(process.env.DATABASE);
-    const collection = database.collection("Scenes");
+    let userID = req.auth.payload.sub
 
-    const filter = {_id: new ObjectId(formData.scene)};
+    const {records : postRecords} = await dbDriver.executeQuery(
+        `MATCH (user:USER {authID: $authID})-[:PART_OF]->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]->(category:CATEGORY {name: $categoryName})
+        CREATE (user)-[:POSTED]->(post:POST {content: $content, type: $type, timestamp: $timestamp})-[:POSTED_ON]->(category)
+        RETURN post.content as content, post.type as type, post.timestamp as timestamp, ID(post) as postID, COLLECT(user)`,
+        {
+            authID: userID,
+            sceneName: formData.scene,
+            categoryName: formData.category,
+            content: formData.content,
+            type: formData.type,
+            timestamp: Date.now(),
+        },
+        {database: 'neo4j'}
+    )
 
-    let oldScene = await collection.findOne(filter) // get the old scene
-
-    let newCategories = oldScene.categories;
-
-    newCategories.forEach(cat => { // for each category in the scene
-        if(cat.name.toLowerCase() == formData.category.toLowerCase()) { // if it's the right one
-            cat.posts.unshift(newPost); // add the post
-        }
-    })
-
-    let result = await collection.updateOne(filter, {$set: {categories: newCategories}}) // update the scene
+    let newPost = await postNodeToPostObject(postRecords[0], postRecords[0].get('COLLECT(user)')[0].properties.name)
 
     res.send(newPost) // send the new post
 }
 
 async function likePost(req, res) {
-    await mongo.connect()
-    const database = mongo.db(process.env.DATABASE);
-    const collection = database.collection("Scenes");
+    let formData = req.body;
+    let userID = req.auth.payload.sub;
 
-    const filter = {_id: new ObjectId(req.body.sceneID)};
+    let {records: likedRecords} = await dbDriver.executeQuery(
+        `
+        MATCH (post:POST)
+        WHERE ID(post) = $postID
+        MATCH (user:USER {authID: $authID})
+        MATCH (user)-[userLiked:LIKED]->(post)
+        RETURN COUNT(userLiked) as userLiked`,
+        {
+            authID: userID,
+            postID: formData.postID,
+        },
+        {database: 'neo4j'}
+    )
 
-    let oldScene = await collection.findOne(filter);
+    let alreadyLiked = likedRecords[0].get('userLiked').toNumber() === 1 ? true : false;
+    console.log(likedRecords[0].get('userLiked').toNumber())
 
-    let newCategories = oldScene.categories;
+    let createQuery = `CREATE (user)-[:LIKED]->(post)`
 
-    let edittedPost;
+    let deleteQuery = `DELETE like`
 
-    newCategories.forEach(cat => { // for each category in the scene
-        if(cat.name.toLowerCase() == req.body.category.toLowerCase()) { // if it's the right one
-            cat.posts.forEach(post => { // got through each post
-                if(post.id === req.body.postID) { // if its the selected post
-                    let unliking = false;
-                    let existingIndex = -1;
+    let {records: postRecords} = await dbDriver.executeQuery(
+        `MATCH (post:POST)
+        WHERE ID(post) = $postID
+        MATCH (user:USER {authID: $authID})
+        OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
+        OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
+        ${!alreadyLiked ? createQuery : deleteQuery}
+        RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user), COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID
+        `,
+        {
+            authID: userID,
+            postID: formData.postID,
+        },
+        {database: 'neo4j'}
+    )
 
-                    post.likes.forEach(like => { // check if the user already has a like for this post
-                        if(like.likedBy === req.body.userID) {
-                            unliking = true; // if they do we're unliking
-                        }
-                    })
+    let newPost = postNodeToPostObject(postRecords[0], postRecords[0].get('COLLECT(user)')[0].properties.name)
 
-                    if(!unliking) {
-                        let like = new Like(req.body.userID) // create a new like
-                        post.likes.push(like) // and add it to the post likes
-                    } else {
-                        post.likes.splice(existingIndex, 1); //remove the like if unliking
-                    }
+    // make sure data sent is accurate to DB since we check likes before changing likes
+    newPost.likes += alreadyLiked ? -1 : 1;
+    newPost.liked = !alreadyLiked;
 
-                    edittedPost = post;
-                }
-            })
-        }
-    })
-
-    let result = await collection.updateOne(filter, {$set: {categories: newCategories}})
-
-    res.send(edittedPost)
+    res.send(newPost)
 }
 
 async function createComment(req, res) {
-    await mongo.connect()
-    const database = mongo.db(process.env.DATABASE);
-    const collection = database.collection("Scenes");
+    let formData = req.body;
+    formData.root = parseInt(formData.root);
+    formData.parent = parseFloat(formData.parent)
+    let userID = req.auth.payload.sub;
 
-    const filter = {_id: new ObjectId(req.body.sceneID)};
+    let relType = formData.root === formData.parent ? 'COMMENTED_ON' : 'REPLIED_TO';
 
-    let oldScene = await collection.findOne(filter);
+    await dbDriver.executeQuery(
+        `MATCH (parent:POST|COMMENT)
+        WHERE ID(parent) = $parentID
+        MATCH (user:USER)-[:PART_OF]->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]->(:CATEGORY {name: $categoryName})<-[:POSTED_ON]-(root:POST)
+        WHERE ID(root) = $rootID
+        CREATE (user)-[:COMMENTED]->(comment:COMMENT {content: $content, timestamp: $timestamp})-[:${relType}]->(parent)`,
+        {
+            parentID: formData.parent,
+            rootID: formData.root,
+            content: formData.comment,
+            categoryName: formData.category,
+            sceneName: formData.scene,
+            timestamp: Date.now(),
+        },
+        {database: 'neo4j'}
+    )
 
-    let newCategories = oldScene.categories;
+    let {records: postRecords} = await dbDriver.executeQuery(
+        `MATCH (post:POST)
+        WHERE ID(post) = $postID
+        MATCH (user:USER {authID: $authID})
+        OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
+        OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
+        RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user), COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID
+        `,
+        {
+            authID: userID,
+            postID: formData.root,
+        },
+        {database: 'neo4j'}
+    )
 
-    let edittedPost;
+    let newPost = postNodeToPostObject(postRecords[0], postRecords[0].get('COLLECT(user)')[0].properties.name)
 
-    newCategories.forEach(cat => { // for each category in the scene
-        if(cat.name.toLowerCase() == req.body.category.toLowerCase()) { // if it's the right one
-            cat.posts.forEach(post => { // got through each post
-                if(post.id === req.body.parents[0]) { // if its the selected post
-                    let newComment = new Comment(req.body.comment.creator, req.body.comment.content)
-                    if(req.body.parents.length === 1) {// if we're just selecting the post
-                        post.comments.unshift(newComment);
-                    } else { // uh oh its a reply fuck shit time
-                        let lastTargetReplies = post.comments; // this variable will store the list of replies to search through for the next target
-                        for(let i = 1; i < req.body.parents.length; i++) { // the 0th element(just a post id to comment on post) is dealt with in the previos if so start with first comment
-                            for(let j = 0; j < lastTargetReplies.length; j++) {
-                                console.log("CHECKING IDs")
-                                if(lastTargetReplies[j].id.localeCompare(req.body.parents[i]) === 0){ // if the id at the current search index j is equal to the id we're looking for in the parents array at index i 
-                                    lastTargetReplies = lastTargetReplies[j].replies; // then the next list to look through is their replies
-                                }
-                            }
-                        }
-
-                        // finally our lastTargetReplies will point to the replies of the comment we're looking for
-                        lastTargetReplies.unshift(newComment)
-                    }
-
-                    edittedPost = post;
-                }
-            })
-        }
-    })
-
-    let result = await collection.updateOne(filter, {$set: {categories: newCategories}})
-
-    res.send(edittedPost)
+    res.send(newPost)
 }
 
 module.exports = {

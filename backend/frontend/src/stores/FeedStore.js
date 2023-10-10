@@ -8,7 +8,7 @@ const postBatchSize = 100;
 export const feedStore = defineStore("feed", {
     state: () => {
         return {
-            app_metadata: {},
+            preferredScene: '',
             scenes: [],
             currentScene: '', 
             currentCategory: "",
@@ -30,18 +30,18 @@ export const feedStore = defineStore("feed", {
             this.user = user
 
             // store the user and request the initial data for the feed
-            const response = await fetch(`${API_URL}/get_feed_init_data/${this.user.sub}`, {
+            const response = await fetch(`${API_URL}/get_feed_init_data/`, {
                 headers: {
                     "Authorization": `Bearer ${this.token}`
                 }
             })
             const data = await response.json();
 
-            // gives you the app metadata and scenes
-            this.app_metadata = data.app_metadata;
+            // gives you the preferred scene and scenes
+            this.preferredScene = data.preferredScene
             this.scenes = data.scenes;
             
-            await this.switchScene(this.app_metadata.preferredScene)
+            await this.switchScene(this.preferredScene)
 
             console.log(logPre + "Successfully initialized data")
             return 'done'
@@ -64,9 +64,6 @@ export const feedStore = defineStore("feed", {
 
             // append all the new posts
             data.forEach((post, index) => {
-                // check if we've liked the post
-                post.liked = this.checkIfPostLiked(post)
-
                 // adds the posts by index (offset by start index) to make sure the proper posts are in the right place, and overwrite any possible duplication
                 category.posts[index + start] = post;
             })
@@ -113,7 +110,9 @@ export const feedStore = defineStore("feed", {
 
             // optimistically like post
             let category = this.getCategory(this.currentCategory)
-            this.getPosts()[postIndex].liked = !this.getPosts()[postIndex].liked;
+            let posts = this.getPosts()
+            posts[postIndex].likes += posts[postIndex].liked ? -1 : 1
+            posts[postIndex].liked = !posts[postIndex].liked;
             
             // send the request to update posts liked (use post id NOT index to avoid errors with out of sync client)
             const response = await fetch(`${API_URL}/like_post/`, {
@@ -125,8 +124,7 @@ export const feedStore = defineStore("feed", {
                 body: JSON.stringify({
                     sceneID: this.currentScene,
                     category: this.currentCategory,
-                    postID: postID,
-                    userID: this.user.sub
+                    postID: posts[postIndex].postID,
                 })
             })
 
@@ -134,26 +132,14 @@ export const feedStore = defineStore("feed", {
                 // if we didn't get the ok
                 console.log(logPre + "Error liking post, unrolling optimistic update, status: " + response.status)
                 // rollback the optimistic change
-                this.getPosts()[postIndex].liked = !this.getPosts()[postIndex].liked;
+                posts[postIndex].liked = !posts[postIndex].liked;
+                posts[postIndex].likes--;
             } else {
                 console.log(logPre + "Successfully liked/unliked post")
                 // otherwise, overwrite the existing post with the one returned
                 const data = await response.json()
-                data.liked = this.checkIfPostLiked(data)
-                this.getPosts()[postIndex] = data
+                posts[postIndex] = data
             }
-        },
-
-        checkIfPostLiked(post) {
-            let liked = false;
-
-            post.likes.forEach(like => {
-                if(like.likedBy === this.user.sub) {
-                    liked = true
-                }
-            })
-
-            return liked;
         },
 
         getPostById(id) {
@@ -172,18 +158,9 @@ export const feedStore = defineStore("feed", {
 
         async createComment(content, parents) {
             let post = this.getPostById(parents[0]);
-            let postIndex = post.index;
-            post = post.post;
+            let postIndex = this.getPosts().indexOf(post);
 
             console.log(logPre + `Commenting: ${content} on post of index: ${postIndex}`)
-
-            let newComment = {
-                content: content,
-                creator: {id: this.user.sub, name: this.user.nickname},
-                id: 0,
-                replies: [],
-                likes: [],
-            }
 
             let response = await fetch(`${API_URL}/create_comment/`, {
                 method: "POST",
@@ -192,10 +169,11 @@ export const feedStore = defineStore("feed", {
                     "Authorization": `Bearer ${this.token}`
                 },
                 body: JSON.stringify({
-                    sceneID: this.currentScene,
+                    scene: this.currentScene,
                     category: this.currentCategory,
-                    parents: parents,
-                    comment: newComment
+                    parent: parents[parents.length-1],
+                    root: parents[0],
+                    comment: content
                 })
             })
 
@@ -229,10 +207,10 @@ export const feedStore = defineStore("feed", {
             await this.fetchPosts(100)
         },
 
-        async switchScene(id) {
-            console.log(logPre + "Switching to scene " + id);
+        async switchScene(name) {
+            console.log(logPre + "Switching to scene " + name);
 
-            this.currentScene = id;
+            this.currentScene = name;
 
             this.initCategories(this.currentScene);
 
@@ -248,11 +226,11 @@ export const feedStore = defineStore("feed", {
 
         // yeah these should be getters, no I won't do that cuz I moved them there and got errors and I don't like that :(
 
-        getScene(id) { // gets the scene by id
+        getScene(name) { // gets the scene by id
             let scene;
 
             for(let i = 0; i < this.scenes.length; i++) {
-                if(this.scenes[i]._id === id) {
+                if(this.scenes[i].name === name) {
                     scene = this.scenes[i];
                 }
             }

@@ -29,7 +29,7 @@ app.use(createAuth0({
     domain: "punkmade.us.auth0.com",
     clientId: "Pw8TzxKzHXe7GqQdty1jKnz7nkmXFtGe",
     authorizationParams: {
-      redirect_uri: window.location.origin,
+      redirect_uri: window.location.origin + "/login-callback",
       audience: "https://punkmade.us.auth0.com/api/v2/"
     }
 }))

@@ -16,7 +16,7 @@ export default {
     name: "Comment",
     data() {
         return {
-            expectedParents: [this.postID, ...this.parents, this.comment.id],
+            expectedParents: [this.postID, ...this.parents, this.comment.id.toString()],
             maxReplyDepth: 3
         }
     },

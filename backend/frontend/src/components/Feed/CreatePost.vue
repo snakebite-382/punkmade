@@ -31,10 +31,6 @@ export default {
             let newPost = {
                 content: this.content,
                 type: 'text',
-                creator: {
-                    id: this.feedStore.user.sub,
-                    name: this.feedStore.user.nickname
-                }
             }
 
             this.content = "" // reset input

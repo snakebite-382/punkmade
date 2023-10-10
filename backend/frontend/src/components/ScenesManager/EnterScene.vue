@@ -75,12 +75,12 @@ export default {
                         "Authorization": `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        user: this.user,
                         center: [this.selectedPos.lat, this.selectedPos.lng],
                         range: this.range,
                     })
                 })
             } else {
+                console.log(this.locationStore.selectedScene.name)
                 response = await fetch('http://localhost:5000/api/scenes/join', {
                     method: "POST",
                     headers: {
@@ -88,8 +88,7 @@ export default {
                         "Authorization": `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        userID: this.user.sub,
-                        sceneID: this.locationStore.selectedScene._id
+                        sceneName: this.locationStore.selectedScene.name
                     })
                 })
             }

@@ -8,7 +8,7 @@
 
 <script>
 import NavBar from './components/NavBar.vue';
-import { routes } from './router';
+import { navRoutes as routes } from './router';
 
 export default {
   components: {

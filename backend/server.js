@@ -32,6 +32,9 @@ APIRouter.use("/scenes", ScenesRouter)
 const FeedRouter = require("./api/Feed/Feed.router");
 APIRouter.use("/feed", FeedRouter);
 
+const UsersRouter = require('./api/Users/Users.router');
+APIRouter.use('/users', UsersRouter)
+
 // static files
 app.use(express.static(frontendDir));
 
@@ -42,8 +45,8 @@ app.get('/', (request, response) => {
 
 process.on("exit", () => { // close mongo on close
     console.log("CLOSING")
-    const { mongo } = require("./api/mongo");
-    mongo.close();
+    const { dbDriver } = require("./api/db");
+    dbDriver.close();
     console.log("CLOSED")
 })
 
