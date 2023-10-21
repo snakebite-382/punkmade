@@ -1,9 +1,9 @@
 const express = require('express')
-const  {checkJwt} = require('../checkjwt')
+const  {checkJwt} = require('../checkjwt.js')
 
 const router = express.Router();
 
-const {loggedin} = require('./Users.service')
+const {loggedin} = require('./Users.service.js')
 
 router.get('/loggedin/', checkJwt, loggedin)
 

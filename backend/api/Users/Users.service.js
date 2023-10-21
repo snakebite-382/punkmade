@@ -1,6 +1,6 @@
 const axios = require('axios');
-const auth0Manager = require('../managementAPI');
-const {dbDriver} = require('../db')
+const auth0Manager = require('../managementAPI.js');
+const {dbDriver} = require('../db.js')
 
 async function loggedin(req, res) {
     let userID = req.auth.payload.sub

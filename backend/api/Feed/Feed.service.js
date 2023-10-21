@@ -1,34 +1,4 @@
-const auth0Manager = require("../managementAPI");
-const { Post, Like, Comment } = require("../../objects/Scene.object");
-const {dbDriver} = require('../db')
-
-async function postNodeToPostObject(post, author) {
-    let id = post.get('postID').toNumber();
-
-    const {records : commentRecords} = await dbDriver.executeQuery(
-        `MATCH p = (post:POST)<-[:COMMENTED_ON]-(:COMMENT)-[:REPLIED_TO|COMMENTED_ON *0..]-(:COMMENT)
-        WHERE ID(post) = $postID
-        WITH COLLECT(p) AS paths
-        CALL apoc.convert.toTree(paths) YIELD value
-        RETURN value`,
-        {
-            postID: id,
-        },
-        {database: 'neo4j'}
-    )
-    console.log(commentRecords[0].get('value'))
-
-    return {
-        content: post.get('content'),
-        type: post.get('type'),
-        timestamp: post.get('timestamp'),
-        author,
-        likes: post.get('likes').toNumber(),
-        liked: post.get('liked').toNumber() === 1 ? true : false,
-        postID: id,
-        comments: []
-    }
-}
+const {dbDriver} = require('../db.js')
 
 async function get_init_feed_data(req, res) {
     let userID = req.auth.payload.sub
@@ -84,42 +54,6 @@ async function get_init_feed_data(req, res) {
     res.send(data);
 }
 
-async function getPosts(req, res) {
-    let userID = req.auth.payload.sub;
-
-    req.params.start = parseInt(req.params.start)
-    req.params.end = parseInt(req.params.end)
-
-    const {records: postRecords} = await dbDriver.executeQuery(
-        `MATCH (user:USER {authID: $authID})-[:PART_OF]->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]->(:CATEGORY {name: $categoryName})<-[]-(post:POST) 
-        OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
-        OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
-        RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user), COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID
-        ORDER BY timestamp DESC
-        SKIP toInteger($skip)
-        LIMIT toInteger($limit)`,
-        {
-            authID: userID,
-            sceneName: req.params.scene,
-            categoryName: req.params.category,
-            skip:req.params.start,
-            limit: req.params.end - req.params.start
-        },
-        {}
-    )
-
-    let posts = []
-    
-    for(let post of postRecords) {
-        let authorNode = post.get("COLLECT(user)")
-        let author = authorNode[0].properties.name
-
-        posts.push(await postNodeToPostObject(post, author))
-    }
-        
-    res.send(JSON.stringify(posts))
-}
-
 async function createPost(req, res) {
     const formData = req.body;
     // const newPost = new Post(formData.creator, formData.content, formData.type) // create a new post
@@ -165,7 +99,6 @@ async function likePost(req, res) {
     )
 
     let alreadyLiked = likedRecords[0].get('userLiked').toNumber() === 1 ? true : false;
-    console.log(likedRecords[0].get('userLiked').toNumber())
 
     let createQuery = `CREATE (user)-[:LIKED]->(post)`
 
@@ -243,7 +176,6 @@ async function createComment(req, res) {
 
 module.exports = {
     get_init_feed_data,
-    getPosts,
     createPost,
     likePost,
     createComment

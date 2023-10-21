@@ -1,8 +1,5 @@
 const axios = require("axios");
-const auth0Manager = require("../managementAPI");
-
-const { Scene } = require("../../objects/Scene.object");
-const { dbDriver } = require("../db");
+const { dbDriver } = require("../db.js");
 
 async function preferredSceneChecking(userID, sceneName) {
     const {records} = await dbDriver.executeQuery(

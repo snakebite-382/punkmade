@@ -26,12 +26,12 @@ app.config.warnHandler = (msg, instance, trace) =>
   console.warn('[Vue warn]: '.concat(msg).concat("\n" + trace))
 
 app.use(createAuth0({
-    domain: "punkmade.us.auth0.com",
-    clientId: "Pw8TzxKzHXe7GqQdty1jKnz7nkmXFtGe",
-    authorizationParams: {
-      redirect_uri: window.location.origin + "/login-callback",
-      audience: "https://punkmade.us.auth0.com/api/v2/"
-    }
+  domain: "punkmade.us.auth0.com",
+  clientId: "Pw8TzxKzHXe7GqQdty1jKnz7nkmXFtGe",
+  authorizationParams: {
+    redirect_uri: window.location.origin + "/login-callback",
+    audience: "https://punkmade.us.auth0.com/api/v2/"
+  }
 }))
 
 app.use(router)

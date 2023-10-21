@@ -1,13 +1,17 @@
 <template>
-    <h2 class="creator">{{ post.author }}</h2>
-    <h3 class="content">{{ post.content }}</h3>
-    <h3 class="posting" v-if="post.posting">POSTING</h3>
-    <h4 class="date">{{ post.timestamp }}</h4>
-    <h4 class="interactions">
-        {{ post.likes }} <LikeButton outline="black" :fill="post.liked ? 'red' : 'none'" @post-liked="$emit('post-liked')"/> 
-        {{ post.comments.length }} <CommentButton outline="black" fill="none" @toggle-comments="commentsOpen=!commentsOpen"/> 
-    </h4>
-    <CommentSection v-if="commentsOpen" :comments="post.comments" :postID="post.postID.toString()"/> 
+    <div class="post">
+        <h2 class="creator">{{ post.author }}</h2>
+        <h3 class="content">{{ post.content }}</h3>
+        <h3 class="posting" v-if="post.posting">POSTING</h3>
+        <h4 class="date">{{ post.timestamp }}</h4>
+        <h4 class="interactions">
+            {{ post.likes }} <LikeButton outline="black" :fill="post.liked ? 'red' : 'none'" @post-liked="$emit('post-liked')"/> 
+            <span v-if="post.comments">
+                {{ post.comments.length }} <CommentButton outline="black" fill="none" @toggle-comments="commentsOpen=!commentsOpen"/> 
+            </span>
+        </h4>
+        <CommentSection v-if="commentsOpen" :comments="post.comments" :postID="post.postID.toString()"/> 
+    </div>
 </template>
 
 <script>

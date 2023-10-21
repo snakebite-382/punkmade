@@ -1,4 +1,5 @@
 import { defineStore } from "pinia"
+import { state, socket } from '@/socket';
 
 const API_URL = "http://localhost:5000/api/feed";
 const logPre = "Feed Data Store: ";
@@ -41,32 +42,49 @@ export const feedStore = defineStore("feed", {
             this.preferredScene = data.preferredScene
             this.scenes = data.scenes;
             
-            await this.switchScene(this.preferredScene)
+            await this.switchScene(this.preferredScene, true)
 
             console.log(logPre + "Successfully initialized data")
             return 'done'
         },
 
-        async fetchPosts(postBatchSize) {
+        async fetchPosts(postBatchSize, gradual = false) {
             let category = this.getCategory(this.currentCategory); 
 
             // get the current category, and base the batchsize on how many we've already fetched so we don't refetch the same post
             const start = category.posts.length;
             const end = start + postBatchSize;
             console.log(logPre + `Fetching posts with index [${start}, ${end}) for category ${this.currentCategory} of scene ${this.currentScene}`)
-            const response = await fetch(`${API_URL}/get_posts/${this.currentScene}/${encodeURIComponent(this.currentCategory)}/${start}/${end}`, {
-                headers: {
-                    "Authorization": `Bearer ${this.token}`
+            
+            socket.connect()
+
+            const authed = await socket.emitWithAck('auth', this.token);
+            
+            if(authed) {
+                if(gradual) {
+                    let run = true;
+                    for(let i = start; i < end; i++) {
+                        if(!run) break;
+                        let result = await socket.emitWithAck('get posts', this.currentScene, this.currentCategory, i, i+1)
+                        if(result.length > 0) {
+                            category.posts[i + start] = result[0];
+                        } else {
+                            run = false;
+                        }
+                    }
+                } else {
+                    const results = await socket.emitWithAck('get posts', this.currentScene, this.currentCategory, start, end)
+
+                    results.forEach((post, index) => {
+                        // adds the posts by index (offset by start index) to make sure the proper posts are in the right place, and overwrite any possible duplication
+                        category.posts[index + start] = post;
+                    })
                 }
-            })
+            } else {
+                console.log(logPre + "SOCKET AUTH ERROR FETCHING POSTS")
+            }
 
-            const data = await response.json();
-
-            // append all the new posts
-            data.forEach((post, index) => {
-                // adds the posts by index (offset by start index) to make sure the proper posts are in the right place, and overwrite any possible duplication
-                category.posts[index + start] = post;
-            })
+            socket.disconnect()
             console.log(logPre + "Fetched posts")
         },
 
@@ -200,21 +218,25 @@ export const feedStore = defineStore("feed", {
             }
         },
 
-        async switchCategory(categoryName) {
+        async switchCategory(categoryName, asynchronous = false) {
             console.log(logPre + "Switching to category " + categoryName)
             this.currentCategory = categoryName;
 
-            await this.fetchPosts(100)
+            if(asynchronous) {
+                this.fetchPosts(100, true)
+            } else {
+                await this.fetchPosts(100)
+            }
         },
 
-        async switchScene(name) {
+        async switchScene(name, asynchronous = false) {
             console.log(logPre + "Switching to scene " + name);
 
             this.currentScene = name;
 
             this.initCategories(this.currentScene);
 
-            await this.switchCategory('general');
+            await this.switchCategory('general', asynchronous);
             console.log(logPre + "Successfully switched scenes")
         },
 
