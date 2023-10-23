@@ -20,7 +20,10 @@ const io = new Server(server, {
 });
 
 // runtime constants 
-const frontendDir = __dirname + "/frontend/dist";
+// prod:
+// const frontendDir = __dirname + "/frontend/dist";
+//test:
+const frontendDir = __dirname + '/frontend/public'
 const port = process.env.port || 5000;
 
 // security

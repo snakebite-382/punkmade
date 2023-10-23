@@ -4,7 +4,6 @@ const {dbDriver} = require('../db.js')
 
 async function loggedin(req, res) {
     let userID = req.auth.payload.sub
-    let driver = await dbDriver;
 
     let auth0User = await auth0Manager.getUser({id: userID})
     
@@ -28,6 +27,28 @@ async function loggedin(req, res) {
     }
 }
 
+async function userinfo (req, res) {
+    let userID = req.auth.payload.sub
+
+    const { records } = await dbDriver.executeQuery(
+        `
+        MATCH (user:USER {authID: $authID})
+        RETURN user.name as nickname
+        `,
+        {
+            authID: userID
+        },
+        {database: 'neo4j'}
+    )
+
+    let user = {
+        nickname: records[0].get('nickname')
+    }
+
+    res.send(user)
+}
+
 module.exports = {
-    loggedin
+    loggedin,
+    userinfo
 }

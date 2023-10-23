@@ -25,10 +25,8 @@ export default {
         handleSubmit(e) {
             e.preventDefault();
             this.feedStore.createComment(this.content, this.feedStore.newCommentParents)
+            this.content = ''
         }
-    },
-    created() {
-        this.feedStore.setupCommentParents(this.postID, [])
-    },
+    }
 }
 </script>

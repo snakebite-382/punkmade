@@ -1,8 +1,9 @@
 <template>
     <div id="Posts" v-if="feedStore.getPosts()">
         <div class="post-container" :key="post.id" v-for="(post, index) in feedStore.getPosts()">
-            <Post :post="post" @post-liked="() => likePost(index, post.id)"/>
+            <Post :post="post" @post-liked="() => likePost(index)"/>
         </div>
+        <button @click="loadMore" v-if="feedStore.morePostsToLoad">Load More Posts</button>
     </div>
 </template>
 
@@ -23,8 +24,12 @@ export default {
     },
 
     methods: {
-        async likePost(postIndex, postID) {
-            await this.feedStore.likePost(postIndex, postID)
+        async likePost(postIndex) {
+            await this.feedStore.likePost(postIndex)
+        },
+
+        loadMore() {
+            this.feedStore.loadMorePosts();
         }
     },
 }

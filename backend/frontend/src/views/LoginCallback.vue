@@ -1,4 +1,5 @@
 <template>
+    <h1>logging you in...</h1>
 </template>
 
 <script>

@@ -2,9 +2,18 @@ import { defineStore } from "pinia"
 import { state, socket } from '@/socket';
 
 const API_URL = "http://localhost:5000/api/feed";
+const TICK_RATE = 375;
 const logPre = "Feed Data Store: ";
 
 const postBatchSize = 100;
+
+function log() {
+    console.log(logPre, ...arguments);
+}
+
+function logError() {
+    console.error(`ERROR at ${logPre} `, ...arguments);
+}
 
 export const feedStore = defineStore("feed", {
     state: () => {
@@ -17,18 +26,64 @@ export const feedStore = defineStore("feed", {
             user: {},
             initialized: false,
             newCommentParents: [''],
+            status: '',
+            toasting: false,
+            socketAuthed: false,
+            posting: false,
+            morePostsToLoad: false,
+            lazyStack: [],
         }
     },
 
     actions: {
-        async setToken (tokenFn) { //very simple, just await the token function and set it as the token
-            this.token = await tokenFn()
-            console.log(logPre + "Token set")
+        throwError(error) {
+            logError(error);
+            this.status = `Error: ${error}`
         },
 
-        async fetchInit(user) {
-            console.log(logPre + 'Fetching initial data')
-            this.user = user
+        async showProgress(job) {
+            let tick = 0;
+            this.toasting = true
+
+            await new Promise(resolve => setTimeout(resolve, TICK_RATE))
+
+            while(this.toasting) {
+                if(this.toasting) {
+                    this.status = `Working ${job}${'.'.repeat(tick)}`
+                
+                    tick++;
+                    if(tick === 4) {
+                        tick = 0;
+                    }
+                }
+                await new Promise(resolve => setTimeout(resolve, TICK_RATE))
+            }
+        },
+
+        cleanToaster() {
+            this.toasting = false;
+            this.status = null 
+        },
+
+        async setToken (tokenFn) { //very simple, just await the token function and set it as the token
+            this.token = await tokenFn()
+            log("Token set")
+        },
+
+        setStatus(status) {
+            this.status = status
+        },
+
+        async fetchInit() {
+            log('Fetching initial data')
+            this.showProgress('Loading Feed');
+            const userInfo = await fetch("http://localhost:5000/api/users/userinfo", {
+                headers: {
+                    "Authorization": `Bearer ${this.token}`
+                }
+            })
+
+            this.user = await userInfo.json()
 
             // store the user and request the initial data for the feed
             const response = await fetch(`${API_URL}/get_feed_init_data/`, {
@@ -38,132 +93,275 @@ export const feedStore = defineStore("feed", {
             })
             const data = await response.json();
 
+            socket.connect()
+
+            this.socketAuthed = await socket.emitWithAck('auth', this.token);
+
             // gives you the preferred scene and scenes
             this.preferredScene = data.preferredScene
             this.scenes = data.scenes;
             
             await this.switchScene(this.preferredScene, true)
 
-            console.log(logPre + "Successfully initialized data")
+            log("Successfully initialized data")
+            this.cleanToaster()
             return 'done'
         },
 
-        async fetchPosts(postBatchSize, gradual = false) {
+        loadMorePosts() {
+            log("Loading more posts")
+            this.showProgress("Loading more posts")
+            let extraToFetch = postBatchSize - this.lazyStack.length;
+            this.offloadLazy();
+            if(extraToFetch > 0) {
+                this.fetchPosts(extraToFetch, false, true)
+            }
+
+            this.fetchPosts(postBatchSize, true);
+            this.cleanToaster()
+        },
+
+        async fetchPosts(postBatchSize, pushToLazyStack = false, gradual = false) {
             let category = this.getCategory(this.currentCategory); 
 
             // get the current category, and base the batchsize on how many we've already fetched so we don't refetch the same post
             const start = category.posts.length;
             const end = start + postBatchSize;
-            console.log(logPre + `Fetching posts with index [${start}, ${end}) for category ${this.currentCategory} of scene ${this.currentScene}`)
+            log(`Fetching posts with index [${start}, ${end}) for category ${this.currentCategory} of scene ${this.currentScene}`)
             
-            socket.connect()
-
-            const authed = await socket.emitWithAck('auth', this.token);
-            
-            if(authed) {
+            if(this.socketAuthed) {
                 if(gradual) {
                     let run = true;
                     for(let i = start; i < end; i++) {
                         if(!run) break;
                         let result = await socket.emitWithAck('get posts', this.currentScene, this.currentCategory, i, i+1)
                         if(result.length > 0) {
-                            category.posts[i + start] = result[0];
+                            if(pushToLazyStack) {
+                                this.lazyStack.push(result[0])
+                            } else {
+                                category.posts[i + start] = result[0];
+                            }
+                        } else {
+                            run = false;
+                        }
+                    }
+
+                    this.morePostsToLoad = run; // if we didn't have to stop loading at any point there's (probably) more to load
+                } else { 
+                    const results = await socket.emitWithAck('get posts', this.currentScene, this.currentCategory, start, end)
+
+                    if(results) {
+                        this.morePostsToLoad = results.length === postBatchSize;
+
+                        results.forEach((post, index) => {
+                            // adds the posts by index (offset by start index) to make sure the proper posts are in the right place, and overwrite any possible duplication
+                            if(pushToLazyStack) {
+                                this.lazyStack.push(post)
+                            } else {
+                                category.posts[index + start] = post;
+                            }
+                        })
+                    } else {
+                        this.morePostsToLoad = false;
+                    }
+                }
+            } else {
+                this.throwError("Socket not authenticated")
+            }
+            log("Fetched posts");
+        },
+
+        offloadLazy() {
+            let category = this.getCategory(this.currentCategory);
+            category.posts.push(...this.lazyStack)
+            this.lazyStack = [];
+        },
+
+        getComment(parents) {
+            let post = this.getPostById(parseInt(parents[0]));
+            let target = post.post;
+
+            let commentsToCheck = target.comments;
+
+            for(let i = 1; i < parents.length; i++) {
+                let changed = false;
+                for(let j = 0; j < commentsToCheck.length; j++) {
+                    if(changed) break;
+                    if(commentsToCheck[j].commentID === parseInt(parents[i])) {
+                        target = commentsToCheck[j]
+                        commentsToCheck = target.replies;
+                        changed = true;
+                    }
+                }
+            }
+
+            return target
+        },
+
+        async fetchComments(parents, batchsize, gradual) {
+            log(`Fetching ${batchsize} comments on target of id ${parents[parents.length -1]} with gradual=${gradual}`)
+            this.showProgress('Getting Comments')
+
+            let target = this.getComment(parents);
+
+            let commentsToCheck = target.replies || target.comments;
+
+            const start = commentsToCheck.length;
+            const end = start + batchsize;
+
+            if(this.socketAuthed) {
+                if(gradual) {
+                    let run = true;
+                    for(let i = start; i < end; i++) {
+                        if(!run) break;
+                        let result = await socket.emitWithAck('get comments', this.currentScene, this.currentCategory, parents[parents.length - 1], i, i+1)
+                        if(result.length > 0) {
+                            commentsToCheck.push(result[0]);
                         } else {
                             run = false;
                         }
                     }
                 } else {
-                    const results = await socket.emitWithAck('get posts', this.currentScene, this.currentCategory, start, end)
-
-                    results.forEach((post, index) => {
-                        // adds the posts by index (offset by start index) to make sure the proper posts are in the right place, and overwrite any possible duplication
-                        category.posts[index + start] = post;
-                    })
+                    const results = await socket.emitWithAck('get comments', this.currentScene, this.currentCategory, parents[parents.length - 1], start, end)
+                
+                    for(let i = 0; i < results.length; i++) {
+                        commentsToCheck.push(results[i])
+                    }
                 }
+                
             } else {
-                console.log(logPre + "SOCKET AUTH ERROR FETCHING POSTS")
+                this.throwError("Socket not authenticated")
             }
-
-            socket.disconnect()
-            console.log(logPre + "Fetched posts")
+            this.cleanToaster()
         },
 
         async createPost(post) {
-            console.log(logPre + "Creating post: " + JSON.stringify(post))
-
-            // store that the post is posting so it shows up as such
-            post.posting = true;
-            post.likes = [];
-            post.comments = [];
-            const postIndex = 0 // store where it is(in case new posts are added so we can still remove it)
-            this.getPosts().unshift(post); // add the new post to the posts array
-
-            post.scene = this.currentScene; // store more post data
-            post.category = this.currentCategory
-
-            const response = await fetch(`${API_URL}/create_post/`, { // send it 
-                method: "POST",
-                headers: {
-                    'Content-Type': "application/json",
-                    "Authorization": `Bearer ${this.token}`
-                },
-                body: JSON.stringify(post)
-            });
-
-            if(response.status !==200) {
-                // if we didn't get the ok
-                console.log(logPre + "Error creating post, unrolling optimistic update, status: " + response.status)
-                // rollback the optimistic change
-                this.getPosts().splice(postIndex, 1)
+            if(!this.posting) {
+                this.posting = true;
+                this.showProgress('Posting')
+                log("Creating post: " + JSON.stringify(post))
+    
+                // store that the post is posting so it shows up as such
+                post.posting = true;
+                post.author = this.user.nickname
+                post.likes = 0;
+                post.comments = [];
+                post.liked = false;
+                post.commentCount = 0;
+                post.timestamp = Date.now();
+                const postIndex = 0 // store where it is(in case new posts are added so we can still remove it)
+                let posts = this.getPosts()
+                posts.unshift(post); // add the new post to the posts array
+    
+                post.scene = this.currentScene; // store more post data
+                post.category = this.currentCategory
+    
+                const response = await fetch(`${API_URL}/create_post/`, { // send it 
+                    method: "POST",
+                    headers: {
+                        'Content-Type': "application/json",
+                        "Authorization": `Bearer ${this.token}`
+                    },
+                    body: JSON.stringify(post)
+                });
+    
+                if(response.status !==200) {
+                    // if we didn't get the ok
+                    this.throwError("Couldn't create post, rolling back optimistic update");
+                    // rollback the optimistic change
+                    posts.splice(postIndex, 1)
+                } else {
+                    log("Successfully created post")
+                    // otherwise, overwrite the existing post with the one returned
+                    const data = await response.json();
+                    posts[postIndex].posting = false;
+                    posts[postIndex].postID = data.ID;
+                }
+                this.cleanToaster()
+                this.posting = false;
             } else {
-                console.log(logPre + "Successfully created post")
-                // otherwise, overwrite the existing post with the one returned
-                const data = await response.json()
-                this.getPosts()[postIndex] = data
+                this.throwError("Already Posting")
             }
         }, 
 
-        async likePost(postIndex, postID) {
-            console.log(logPre + "Liking/Unliking post of index " + postIndex)
-
+        async likePost(postIndex) {
             // optimistically like post
-            let category = this.getCategory(this.currentCategory)
-            let posts = this.getPosts()
-            posts[postIndex].likes += posts[postIndex].liked ? -1 : 1
-            posts[postIndex].liked = !posts[postIndex].liked;
-            
-            // send the request to update posts liked (use post id NOT index to avoid errors with out of sync client)
-            const response = await fetch(`${API_URL}/like_post/`, {
-                method: "POST",
-                headers: {
-                    'Content-Type': "application/json",
-                    "Authorization": `Bearer ${this.token}`
-                },
-                body: JSON.stringify({
-                    sceneID: this.currentScene,
-                    category: this.currentCategory,
-                    postID: posts[postIndex].postID,
-                })
-            })
-
-            if(response.status !==200) {
-                // if we didn't get the ok
-                console.log(logPre + "Error liking post, unrolling optimistic update, status: " + response.status)
-                // rollback the optimistic change
+            let posts = this.getPosts();
+            if(!posts[postIndex].posting) {
+                this.showProgress('Liking')
+                log("Liking/Unliking post of index " + postIndex)
+                posts[postIndex].likes += posts[postIndex].liked ? -1 : 1
                 posts[postIndex].liked = !posts[postIndex].liked;
-                posts[postIndex].likes--;
-            } else {
-                console.log(logPre + "Successfully liked/unliked post")
-                // otherwise, overwrite the existing post with the one returned
-                const data = await response.json()
-                posts[postIndex] = data
+                
+                // send the request to update posts liked (use post id NOT index to avoid errors with out of sync client)
+                const response = await fetch(`${API_URL}/like_post/`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': "application/json",
+                        "Authorization": `Bearer ${this.token}`
+                    },
+                    body: JSON.stringify({
+                        sceneID: this.currentScene,
+                        category: this.currentCategory,
+                        postID: posts[postIndex].postID,
+                    })
+                })
+    
+                if(response.status !==200) {
+                    // if we didn't get the ok
+                    this.throwError("Couldn't like post, unrolling optimistic update");
+                    // rollback the optimistic change
+                    posts[postIndex].liked = !posts[postIndex].liked;
+                    posts[postIndex].likes--;
+                } else {
+                    log("Successfully liked/unliked post")
+                }
+                this.cleanToaster()
+            }
+        },
+
+        async likeComment(parents) {
+            let post = this.getPostById(parseInt(parents[0]))
+
+            if(!post.posting) {
+                this.showProgress("Liking");
+                log(`Liking comment with parents ${parents.join(', ')}`)
+
+                let comment = this.getComment(parents);
+                comment.likes++;
+                comment.liked = true;
+
+                const response = await fetch(`${API_URL}/like_comment/`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': "application/json",
+                        "Authorization": `Bearer ${this.token}`
+                    },
+                    body: JSON.stringify({
+                        sceneID: this.currentScene,
+                        category: this.currentCategory,
+                        targetID: comment.commentID,
+                    })
+                })
+    
+                if(response.status !==200) {
+                    // if we didn't get the ok
+                    this.throwError("Couldn't like comment, unrolling optimistic update");
+                    // rollback the optimistic change
+                    comment.likes--;
+                    comment.liked = false;
+                } else {
+                    log("Successfully liked/unliked post")
+                }
+
+                this.cleanToaster()
             }
         },
 
         getPostById(id) {
             let result;
             this.getPosts().forEach((post, index) => {
-                if(post.id === id) {
+                if(post.postID === id) {
                     result = {
                         post,
                         index
@@ -175,34 +373,47 @@ export const feedStore = defineStore("feed", {
         },
 
         async createComment(content, parents) {
-            let post = this.getPostById(parents[0]);
-            let postIndex = this.getPosts().indexOf(post);
+            let post = this.getPostById(parseInt(parents[0]));
+            if(!post.posting) {
+                this.showProgress("Commenting")
+                let postIndex = post.index;
+                post = post.post;
 
-            console.log(logPre + `Commenting: ${content} on post of index: ${postIndex}`)
+                log(`Commenting: ${content} on post of index: ${postIndex}`)
 
-            let response = await fetch(`${API_URL}/create_comment/`, {
-                method: "POST",
-                headers: {
-                    'Content-Type': "application/json",
-                    "Authorization": `Bearer ${this.token}`
-                },
-                body: JSON.stringify({
-                    scene: this.currentScene,
-                    category: this.currentCategory,
-                    parent: parents[parents.length-1],
-                    root: parents[0],
-                    comment: content
+                let response = await fetch(`${API_URL}/create_comment/`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': "application/json",
+                        "Authorization": `Bearer ${this.token}`
+                    },
+                    body: JSON.stringify({
+                        scene: this.currentScene,
+                        category: this.currentCategory,
+                        parent: parents[parents.length-1],
+                        root: parents[0],
+                        comment: content
+                    })
                 })
-            })
 
-            let data = await response.json();
+                if(parents.length === 1) {
+                    this.getPosts()[postIndex].commentCount++;
+                }
 
-            this.getPosts()[postIndex] = data;
+                let success = await response.json()
+                if(success) {
+                    await this.fetchComments(parents, 1, true);
+                } else {
+                    this.throwError("Couldn't create comment")   
+                }
+                this.status = null
+                this.cleanToaster()
+            }
         },
 
         initCategories(scene) {
             // just goes through the categories and converts it from a list of names to a name posts pair
-            console.log(logPre + "Initializing categories for scene: " + scene)
+            log("Initializing categories for scene: " + scene)
             let categories = []
             let target = this.getScene(scene)
 
@@ -219,30 +430,36 @@ export const feedStore = defineStore("feed", {
         },
 
         async switchCategory(categoryName, asynchronous = false) {
-            console.log(logPre + "Switching to category " + categoryName)
+            log("Switching to category " + categoryName)
+            this.showProgress('Switching Category')
             this.currentCategory = categoryName;
 
             if(asynchronous) {
-                this.fetchPosts(100, true)
+                this.fetchPosts(postBatchSize, false, true)
             } else {
-                await this.fetchPosts(100)
+                await this.fetchPosts(postBatchSize)
             }
+
+            this.fetchPosts(postBatchSize, true)
+            this.cleanToaster()
         },
 
         async switchScene(name, asynchronous = false) {
-            console.log(logPre + "Switching to scene " + name);
+            log("Switching to scene " + name);
+            this.showProgress('Switching Scene')
 
             this.currentScene = name;
 
             this.initCategories(this.currentScene);
 
             await this.switchCategory('general', asynchronous);
-            console.log(logPre + "Successfully switched scenes")
+            log("Successfully switched scenes")
+            this.cleanToaster()
         },
 
         setupCommentParents(postID = this.newCommentParents[0], parents = this.newCommentParents.slice(1)) {
             let newParents = [postID].concat(parents)
-            console.log(logPre + "Setting up comment parents " + JSON.stringify(newParents))
+            log("Setting up comment parents " + JSON.stringify(newParents))
             this.newCommentParents = newParents
         },
 

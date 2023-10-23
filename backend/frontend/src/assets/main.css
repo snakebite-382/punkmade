@@ -1,1 +1,10 @@
 @import './base.css';
+@font-face {
+    font-family: "Texturina";
+    font-display: auto;
+    src: local('Texturina'), url(@/assets/fonts/Texturina/Texturina.ttf) format('truetype');
+}
+
+* {
+    font-family: "Texturina" !important;
+}

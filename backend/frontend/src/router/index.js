@@ -19,7 +19,8 @@ export const routes = [
   {
     path:'/login-callback',
     name: 'login-callback',
-    component: LoginCallback
+    component: LoginCallback,
+    beforeEnter: authGuard
   }
 ]
 

@@ -69,7 +69,7 @@ export const locationStore = defineStore('location', {
         },
 
         setScene(scene) {
-            console.log(logPre + "Selected: " + scene._id);
+            console.log(logPre + "Selected: " + scene.name);
             this.selectedScene = scene;
             this.mode = 'join';
         },

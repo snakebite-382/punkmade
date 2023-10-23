@@ -1,7 +1,7 @@
 <template>
     <div class="comments" @click="onClick">
         <h4 v-show="comments.length === 0">comments go here</h4>
-        <Comment v-for="comment in comments" :comment="comment" :key="comment.id" :depth="currentDepth" :parents="[]" :postID="postID"/>
+        <Comment v-for="comment in comments" :comment="comment" :key="comment.commentID" :depth="currentDepth" :parents="[]" :postID="postID"/>
         <CreateComment :postID="postID"/> 
     </div>
 </template>
@@ -37,6 +37,10 @@ export default {
                 this.feedStore.setupCommentParents(this.postID, [])
             }
         }
+    },
+
+    async created() {
+        this.feedStore.fetchComments([this.postID], 100, true)
     }
 }
 </script>

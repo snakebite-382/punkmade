@@ -1,6 +1,6 @@
 
 <template>
-  <div id="App">
+  <div id="App bg-grey-background">
     <NavBar :pages="pages"/>
     <router-view></router-view>  
   </div>

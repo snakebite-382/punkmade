@@ -13,6 +13,7 @@
         <AuthButton/>
         <FullscreenLoading/>
     </div>
+    <StatusToaster/>
 </template>
 
 <script>
@@ -23,6 +24,7 @@ import FullscreenLoading from '../Loading/Fullscreen.vue';
 import CreatePost from './CreatePost.vue';
 import CategoryNav from './CategoryNav.vue';
 import SceneNav from './SceneNav.vue';
+import StatusToaster from './StatusToaster.vue'
 
 // store stuff
 import { feedStore } from '../../stores/FeedStore';
@@ -48,7 +50,8 @@ export default {
         FullscreenLoading,
         CreatePost,
         CategoryNav,
-        SceneNav
+        SceneNav,
+        StatusToaster
     },
 
     computed: {

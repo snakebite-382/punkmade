@@ -38,7 +38,6 @@ export default {
             selectedPos: [],
             isLoading: true,
             range: 15,
-            user: this.$auth0.user,
         }
     },
 

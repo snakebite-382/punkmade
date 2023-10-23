@@ -1,4 +1,5 @@
 const {dbDriver} = require('../db.js')
+const {postNodeToPostObject} = require('../Websockets.js')
 
 async function get_init_feed_data(req, res) {
     let userID = req.auth.payload.sub
@@ -63,7 +64,7 @@ async function createPost(req, res) {
     const {records : postRecords} = await dbDriver.executeQuery(
         `MATCH (user:USER {authID: $authID})-[:PART_OF]->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]->(category:CATEGORY {name: $categoryName})
         CREATE (user)-[:POSTED]->(post:POST {content: $content, type: $type, timestamp: $timestamp})-[:POSTED_ON]->(category)
-        RETURN post.content as content, post.type as type, post.timestamp as timestamp, ID(post) as postID, COLLECT(user)`,
+        RETURN ID(post) as postID`,
         {
             authID: userID,
             sceneName: formData.scene,
@@ -75,9 +76,9 @@ async function createPost(req, res) {
         {database: 'neo4j'}
     )
 
-    let newPost = await postNodeToPostObject(postRecords[0], postRecords[0].get('COLLECT(user)')[0].properties.name)
+    let newPost = postRecords[0].get('postID').toNumber()
 
-    res.send(newPost) // send the new post
+    res.send({ID: newPost}) // send the new post
 }
 
 async function likePost(req, res) {
@@ -111,7 +112,6 @@ async function likePost(req, res) {
         OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
         OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
         ${!alreadyLiked ? createQuery : deleteQuery}
-        RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user), COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID
         `,
         {
             authID: userID,
@@ -120,13 +120,49 @@ async function likePost(req, res) {
         {database: 'neo4j'}
     )
 
-    let newPost = postNodeToPostObject(postRecords[0], postRecords[0].get('COLLECT(user)')[0].properties.name)
+    res.send(true)
+}
 
-    // make sure data sent is accurate to DB since we check likes before changing likes
-    newPost.likes += alreadyLiked ? -1 : 1;
-    newPost.liked = !alreadyLiked;
+async function likeComment(req, res) {
+    let formData = req.body;
+    let userID = req.auth.payload.sub;
 
-    res.send(newPost)
+    let {records: likedRecords} = await dbDriver.executeQuery(
+        `
+        MATCH (comment:COMMENT)
+        WHERE ID(comment) = $targetID
+        MATCH (user:USER {authID: $authID})
+        MATCH (user)-[userLiked:LIKED]->(comment)
+        RETURN COUNT(userLiked) as userLiked`,
+        {
+            authID: userID,
+            targetID: formData.targetID,
+        },
+        {database: 'neo4j'}
+    )
+
+    let alreadyLiked = likedRecords[0].get('userLiked').toNumber() === 1 ? true : false;
+
+    let createQuery = `CREATE (user)-[:LIKED]->(comment)`
+
+    let deleteQuery = `DELETE like`
+
+    let {records: postRecords} = await dbDriver.executeQuery(
+        `MATCH (comment:COMMENT)
+        WHERE ID(comment) = $targetID
+        MATCH (user:USER {authID: $authID})
+        OPTIONAL MATCH (:USER)-[like:LIKED]->(comment)
+        OPTIONAL MATCH (user)-[userLiked:LIKED]->(comment)
+        ${!alreadyLiked ? createQuery : deleteQuery}
+        `,
+        {
+            authID: userID,
+            targetID: formData.targetID,
+        },
+        {database: 'neo4j'}
+    )
+
+    res.send(true)
 }
 
 async function createComment(req, res) {
@@ -134,7 +170,6 @@ async function createComment(req, res) {
     formData.root = parseInt(formData.root);
     formData.parent = parseFloat(formData.parent)
     let userID = req.auth.payload.sub;
-
     let relType = formData.root === formData.parent ? 'COMMENTED_ON' : 'REPLIED_TO';
 
     await dbDriver.executeQuery(
@@ -158,9 +193,10 @@ async function createComment(req, res) {
         `MATCH (post:POST)
         WHERE ID(post) = $postID
         MATCH (user:USER {authID: $authID})
+        OPTIONAL MATCH (:COMMENT)-[commentCount:COMMENTED_ON]->(post)
         OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
         OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
-        RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user), COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID
+        RETURN post.type as type, post.timestamp as timestamp, COLLECT(user), COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID, COUNT(commentCount) as commentCount
         `,
         {
             authID: userID,
@@ -178,5 +214,6 @@ module.exports = {
     get_init_feed_data,
     createPost,
     likePost,
+    likeComment,
     createComment
 }
