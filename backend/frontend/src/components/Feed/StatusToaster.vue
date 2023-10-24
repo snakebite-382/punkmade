@@ -35,7 +35,6 @@ export default {
     border-radius: 15px;
     margin: auto;
     opacity: 0;
-    transition: opacity 0.5s;
 }
 
 .show {

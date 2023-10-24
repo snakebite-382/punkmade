@@ -205,7 +205,7 @@ async function createComment(req, res) {
         {database: 'neo4j'}
     )
 
-    let newPost = postNodeToPostObject(postRecords[0], postRecords[0].get('COLLECT(user)')[0].properties.name)
+    let newPost = true
 
     res.send(newPost)
 }

@@ -1,6 +1,6 @@
 <template>
     <div class="map">
-        <h1>Will Be Named: {{ sceneName }} {{ sceneName !== "Loading..." ? "Punk" : ""}}</h1>
+        <h1 class="tw-text-lg">Will Be Named: {{ sceneName }} {{ sceneName !== "Loading..." ? "Punk" : ""}}</h1>
         <!-- if the scene name is Loading... (the loading name) cut the punk, then if it's a name add the Punk -->
         <GMapMap
             :center="center"

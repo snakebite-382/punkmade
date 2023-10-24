@@ -25,8 +25,14 @@ export const routes = [
 ]
 
 let navRoutes = [
-  routes[0],
-  routes[1]
+  {
+    path: '/',
+    name: 'Home'
+  },
+  {
+    path: '/scenes/',
+    name: 'Scene Manager'
+  }
 ]
 
 const router = createRouter({

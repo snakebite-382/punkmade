@@ -1,19 +1,38 @@
 <template>
-    <Nav :items="scenes" @nav-item-click="(data) => {
-        $emit('nav-item-click', data) 
-    }" />
+    <div class="scene-nav tw-w-fit">
+        <span @click="expanded = !expanded">Scenes <Chevron :Down="expanded"/></span>
+        <Nav :items="scenes" @nav-item-click="(data) => {
+            $emit('nav-item-click', data) 
+        }" :active="feedStore.currentScene" class="tw-flex-col tw-ml-4" v-show="expanded"/>
+    </div>
 </template>
 
 <script>
 import Nav from '../Nav.vue';
+import { feedStore } from '../../stores/FeedStore';
+import { mapStores } from 'pinia';
+import Chevron from './Chevron.vue';
 
 export default {
     name: "SceneName",
+
+    data() {
+        return {
+            expanded: false,
+        }
+    },
+
+    computed: {
+        ...mapStores(feedStore)
+    },
+
     props: {
         scenes: Array,
     },
     components: {
-        Nav
+        Nav,
+
+        Chevron
     },
 }
 </script>

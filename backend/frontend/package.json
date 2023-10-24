@@ -11,6 +11,7 @@
     "@auth0/auth0-vue": "^2.3.1",
     "@fawmi/vue-google-maps": "0.9.67",
     "install": "^0.13.0",
+    "markdown-it": "^13.0.2",
     "npm": "^10.2.0",
     "pinia": "^2.1.6",
     "socket.io-client": "^4.7.2",

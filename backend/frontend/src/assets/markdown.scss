@@ -1,0 +1,34 @@
+.markdown {
+    h1 {
+        @apply tw-text-2xl
+    }
+
+    h2 {
+        @apply tw-text-xl
+    }
+
+    h3 {
+        @apply tw-text-lg
+    }
+
+    h4 {
+        @apply tw-text-base
+    }
+
+    h5 {
+        @apply tw-text-sm
+    }
+
+    h6 {
+        @apply tw-text-xs
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply tw-underline tw-decoration-red
+    }
+}

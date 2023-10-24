@@ -1,14 +1,14 @@
 <template>
     <div id="Create-Scene">
         <div class="loaded" v-if="!isLoading">
-            <h1>Create Scene</h1>
+            <h1 class="tw-text-xl">Create Scene</h1>
             <CreateMap :center="userLocation" :range="range" @update-pos="handleUpdate"/>
             <form @submit="handleSubmit" v-if="locationStore.mode === 'create'">
                 <label for="range">Range: </label>
-                <input type="number" id="range" name="range" v-model="range" min="1" max="30">
-                <button type="submit">Submit</button>
+                <StyledInput type="number" id="range" name="range" min="1" max="30" v-model="range"/>
+                <StyledBtn type="submit">Submit</StyledBtn>
             </form>
-            <button v-if="locationStore.mode === 'join'" @click="handleSubmit">Join {{ locationStore.selectedScene.name }}</button>
+            <StyledBtn v-if="locationStore.mode === 'join'" @click="handleSubmit">Join {{ locationStore.selectedScene.name }}</StyledBtn>
         </div>
         <FullscreenLoading v-show="isLoading"/>
     </div>
@@ -17,6 +17,8 @@
 <script>
 import CreateMap from './CreateMap.vue';
 import FullscreenLoading from '../Loading/Fullscreen.vue';
+import StyledInput from '../Reusable/StyledInput.vue';
+import StyledBtn from '../Reusable/StyledBtn.vue';
 import { locationStore } from '../../stores/LocationStore';
 import { mapStores } from 'pinia';
 
@@ -25,7 +27,9 @@ export default {
 
     components: {
         CreateMap,
-        FullscreenLoading
+        FullscreenLoading,
+        StyledBtn,
+        StyledInput
     },
 
     computed: {

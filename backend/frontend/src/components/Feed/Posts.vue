@@ -1,5 +1,5 @@
 <template>
-    <div id="Posts" v-if="feedStore.getPosts()">
+    <div id="Posts" v-if="feedStore.getPosts()" class="tw-flex tw-items-center tw-flex-col tw-w-full tw-mt-6">
         <div class="post-container" :key="post.id" v-for="(post, index) in feedStore.getPosts()">
             <Post :post="post" @post-liked="() => likePost(index)"/>
         </div>
@@ -37,10 +37,4 @@ export default {
 </script>
 
 <style scoped>
-.post {
-    border: 2px solid black;
-    width: fit-content;
-    margin-top: 10px;
-    padding: 5px;
-}
 </style>

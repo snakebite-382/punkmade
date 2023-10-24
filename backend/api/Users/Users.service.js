@@ -25,6 +25,8 @@ async function loggedin(req, res) {
 
         await auth0Manager.updateAppMetadata({id: userID}, auth0User.app_metadata)
     }
+
+    res.send(true)
 }
 
 async function userinfo (req, res) {

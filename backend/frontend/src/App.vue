@@ -1,7 +1,7 @@
 
 <template>
-  <div id="App bg-grey-background">
-    <NavBar :pages="pages"/>
+  <div id="App" :class="`tw-bg-grey tw-w-full tw-min-h-screen tw-text-white tw-snap-none`">
+    <NavBar :pages="pages" :active="this.$route.path"><AuthButton/></NavBar>
     <router-view></router-view>  
   </div>
 </template>
@@ -9,15 +9,18 @@
 <script>
 import NavBar from './components/NavBar.vue';
 import { navRoutes as routes } from './router';
+import AuthButton from './components/AuthButton.vue';
 
 export default {
   components: {
-    NavBar
+    NavBar,
+    AuthButton
   },
 
   data() {
     return {
-      pages: routes
+      pages: routes,
+      whiteText: true, // allows switching of green/white text
     }
   }
 }

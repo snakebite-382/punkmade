@@ -5,18 +5,6 @@
 *, *::before, *::after {
   box-sizing: border-box;
   border: none;
-  /* make text white for contast*/
-  /* color: white; */
-  /* font-family: "Texturina", Georgia, "Times New Roman", Times, serif; */
-}
-
-html {
-  /* make 1 rem == 10px */
-  /*font-size: 62.5%; /* (62.5/100) * 16px = 10px */
-  /* disable auto text sizing on mobile */
-  -webkit-text-size-adjust: none; /* for iOS Safari */
-  -moz-text-size-adjust: none;
-       text-size-adjust: none; /* for other mobile browsers */
 }
 
 /* as long as the user doesn't have a reduced motion preference,
@@ -31,6 +19,10 @@ img {
   display: block;
   max-width: 100%;
   color: white;
+}
+
+svg {
+  display: inline;
 }
 
 /* removes the list stylings unless they have an article that makes sense */
@@ -49,30 +41,33 @@ article ol, article ul {
   list-style-position: inside;
 }
 
-/* nicer links? */
-a {
-  /* Places underlines below the descenders */
-  text-underline-position: under;
-  /* Sets the thickness as a percentage of the font size */
-  text-decoration-thickness: 8;
-}
-
 /* add pointers to lots of usable elements that don't have them */
 label, button, select, summary, [type=radio], [type=submit], [type=checkbox] {
   cursor: pointer;
 }
 
 body {
-  /*background: black;  dark and broody oooooh*/
-  margin: 0;
-  padding: 20px;
-  margin-bottom: 50px;
-  width: 100vw;
-  height: 100vh;
   overflow-x: hidden;
 }
 
-input {
-  border: 2px solid black;
-  outline: none;
+/* ===== Scrollbar CSS ===== */
+/* Firefox */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: #800000 #1f1f1f;
+}
+
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 20px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #1f1f1f;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #800000;
+  border-radius: 8px;
+  border: 4px solid #1f1f1f;
 }

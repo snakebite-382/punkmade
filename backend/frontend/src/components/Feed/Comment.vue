@@ -1,11 +1,16 @@
 <template>
-    <div class="comment">
-        {{ comment.author }}: {{ comment.content }}
-        <button @click="handleReply">{{ (isReplying()) ? 'stop replying' : 'reply'}}</button>
-        <button @click="showReplies = !showReplies"> {{ showReplies ? 'stop viewing replies' : 'view replies' }}</button>
-        <LikeButton @post-liked="feedStore.likeComment(expectedParents)" :size='16' :fill="comment.liked ? 'red' : 'none'" outline="black"/>
+    <div class="comment tw-my-2">
+        <span class="author tw-text-base">{{ comment.author }}</span> : <span class="content tw-text-sm">{{ comment.content }}</span>
+        <span class="interaction tw-text-sm">
+            <StyledBtn @click="handleReply" class="tw-p-0.5 tw-mx-2">{{ (isReplying()) ? 'stop replying' : 'reply'}}</StyledBtn>
+            <StyledBtn @click="showReplies = !showReplies" class="tw-p-0.5 tw-mr-2"> {{ showReplies ? 'stop viewing replies' : 'view replies' }}</StyledBtn>
+            <LikeButton @post-liked="feedStore.likeComment(expectedParents)" :size='16' :fill="comment.liked ? 'red' : 'none'" outline="black"/>
+        </span>
         <div :class="'replies ' + (depth > maxReplyDepth ? 'flattened' : 'unflattened') " v-if="comment.replies.length > 0 && showReplies">
             <Comment v-for="reply in comment.replies" :comment="reply" :key="reply.commentID" :depth="depth + 1" :parents="expectedParents.slice(1)" :postID="postID"/>
+        </div>
+        <div v-if="comment.replies.length === 0 && showReplies">
+            <span class="tw-text-sm tw-ml-4">No Replies</span>
         </div>
     </div>
 </template>
@@ -14,6 +19,7 @@
 import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
 import LikeButton from './LikeButton.vue';
+import StyledBtn from '../Reusable/StyledBtn.vue';
 
 export default {
     name: "Comment",
@@ -36,7 +42,8 @@ export default {
 
     components: {
         LikeButton,
-        Comment
+        Comment,
+        StyledBtn
     },  
 
     methods: {
@@ -63,11 +70,11 @@ export default {
 </script>
 
 <style scoped>
-svg {
-    margin-left: 5px;
-    margin-bottom: -3px;
-}
 .replies.unflattened { 
-    margin-left: 10px;
+    margin-left: 16px;
+}
+
+svg {
+    margin-top: -10px;
 }
 </style>

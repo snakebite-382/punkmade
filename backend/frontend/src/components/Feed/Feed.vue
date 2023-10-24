@@ -1,30 +1,38 @@
 <template>
-    <div v-show="!isLoading">
-        <h1 v-if="feedStore.initialized">{{ feedStore.getScene(feedStore.currentScene).name }} : {{ getCatName() }}</h1>
-        <AuthButton/> | <button @click="toggleCreatePost">{{ showCreatePost ? "close" : "post something" }}</button> <br/><br/>
-        <CreatePost v-show="showCreatePost"/>
-        <div v-if="feedStore.initialized">
-            <SceneNav :scenes="returnNavScenes()" @nav-item-click="sceneNavClick" id="Scene-Nav"/>
-            <CategoryNav :categories="returnNavCategories()" @nav-item-click="categoriesNavClick" id="Category-Nav"/>
-            <Posts />
+    <div id="Feed" class="tw-min-h-screen">
+        <div v-show="!isLoading" v-if="feedStore.initialized" class="tw-grid grid">
+            <Nav class="sidebar tw-flex-col tw-col-start-1 tw-justify-start tw-border-red tw-border-solid tw-border-4 tw-h-fit tw-p-4 tw-text-xl tw-row-start-1 tw-z-10">
+                <SceneNav :scenes="returnNavScenes()" @nav-item-click="sceneNavClick" id="Scene-Nav"/>
+                <CategoryNav :categories="returnNavCategories()" @nav-item-click="categoriesNavClick" id="Category-Nav"/>
+                <div class="creation tw-text-lg tw-mt-2">
+                    <StyledBtn @click="toggleCreatePost" class="tw-m">{{ showCreatePost ? "close" : "post something" }}</StyledBtn> 
+                    <CreatePost v-show="showCreatePost" class="tw-mt-2"/>
+                </div>
+            </Nav>
+            
+            <div class="center tw-col-start-1 tw-col-span-2 tw-row-start-1 tw-flex tw-flex-col tw-items-center">
+                <Posts/>
+            </div>
         </div>
+        <div v-show="isLoading">
+            <FullscreenLoading/>
+        </div>
+        <StatusToaster/>
     </div>
-    <div v-show="isLoading">
-        <AuthButton/>
-        <FullscreenLoading/>
-    </div>
-    <StatusToaster/>
 </template>
 
 <script>
 // components
-import AuthButton from '../AuthButton.vue';
 import Posts from './Posts.vue';
 import FullscreenLoading from '../Loading/Fullscreen.vue';
 import CreatePost from './CreatePost.vue';
 import CategoryNav from './CategoryNav.vue';
 import SceneNav from './SceneNav.vue';
 import StatusToaster from './StatusToaster.vue'
+import StyledBtn from '../Reusable/StyledBtn.vue';
+import Nav from '../Nav.vue';
+
+import '../../assets/markdown.scss'
 
 // store stuff
 import { feedStore } from '../../stores/FeedStore';
@@ -45,13 +53,14 @@ export default {
     },
 
     components: {
-        AuthButton,
         Posts,
         FullscreenLoading,
         CreatePost,
         CategoryNav,
         SceneNav,
-        StatusToaster
+        StatusToaster,
+        StyledBtn,
+        Nav,
     },
 
     computed: {
@@ -117,3 +126,13 @@ export default {
     },
 }
 </script>
+
+<style scoped>
+.grid {
+    grid-template-columns: max-content 1fr;
+}
+
+.sidebar {
+    margin-top: -4px;
+}
+</style>
