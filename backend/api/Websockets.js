@@ -79,38 +79,54 @@ function postNodeToPostObject(post, author) {
  * @returns Posts[Post]
  */
 async function getPosts(userID, scene, category, start, end) {
-    const {records: postRecords} = await dbDriver.executeQuery(
-        `MATCH (user:USER {authID: $authID})-[:PART_OF]
-        ->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]
-        ->(:CATEGORY {name: $categoryName})<-[:POSTED_ON]
-        -(post:POST) 
-        OPTIONAL MATCH (:COMMENT)-[commentCount:COMMENTED_ON]->(post)
-        OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
-        OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
-        RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user), COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID, COUNT(commentCount) as commentCount
-        ORDER BY timestamp DESC
-        SKIP toInteger($skip)
-        LIMIT toInteger($limit)`,
-        {
-            authID: userID,
-            sceneName: scene,
-            categoryName: category,
-            skip: start,
-            limit: end - start
-        },
-        {database: 'neo4j'}
-    )
-
-    let posts = []
+    if(dbDriver) {
+        const {records: postRecords} = await dbDriver.executeQuery(
+            `MATCH (user:USER {authID: $authID})-[:PART_OF]
+            ->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]
+            ->(:CATEGORY {name: $categoryName})<-[:POSTED_ON]
+            -(post:POST) 
+            OPTIONAL MATCH (:COMMENT)-[commentCount:COMMENTED_ON]->(post)
+            OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
+            OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
+            RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user), COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID, COUNT(commentCount) as commentCount
+            ORDER BY timestamp DESC
+            SKIP toInteger($skip)
+            LIMIT toInteger($limit)`,
+            {
+                authID: userID,
+                sceneName: scene,
+                categoryName: category,
+                skip: start,
+                limit: end - start
+            },
+            {database: 'neo4j'}
+        )
     
-    for(let post of postRecords) {
-        let authorNode = post.get("COLLECT(user)")
-        let author = authorNode[0].properties.name
-
-        posts.push(postNodeToPostObject(post, author))
-    }
+        let posts = []
         
-    return posts;
+        for(let post of postRecords) {
+            let authorNode = post.get("COLLECT(user)")
+            let author = authorNode[0].properties.name
+    
+            posts.push(postNodeToPostObject(post, author))
+        }
+            
+        return posts;   
+    } else {
+        return [
+            {
+                content: "# TEST POST FROM FAKED DB",
+                type: 'text',
+                timestamp: Date.now(),
+                author: "caelouwho",
+                likes: 0,
+                liked: false,
+                postID: 1,
+                commentCount: 1,
+                comments: []
+            }
+        ]
+    }
 }
 
 function commentNodeToCommentObject(comment) {
@@ -124,47 +140,60 @@ function commentNodeToCommentObject(comment) {
         author,
         likes: comment.get('likes').toNumber(),
         liked: comment.get('liked').toNumber() === 1 ? true : false,
-        postID: id,
         replies: []
     }
 }
 
 async function getComments(userID, scene, category, targetID, start, end) {
-    const {records: commentRecords} = await dbDriver.executeQuery(
-        `
-        MATCH (comment:COMMENT)-[:COMMENTED_ON | REPLIED_TO ]
-        ->(target)-[:POSTED_ON | REPLIED_TO | COMMENTED_ON *]
-        ->(:CATEGORY {name: $categoryName})<-[:HAS_CATEGORY]
-        -(:SCENE {name: $sceneName})
-        WHERE id(target) = toInteger($targetID)
-        MATCH (author:USER)-[:COMMENTED]->(comment)
-        OPTIONAL MATCH (:USER)-[like:LIKED]->(comment)
-        OPTIONAL MATCH (user:USER {authID: $userID})-[userLiked:LIKED]->(comment)
-        RETURN comment.content as content, comment.timestamp as timestamp, id(comment) as commentID, COLLECT(author) as author, COUNT(like) as likes, COUNT(userLiked) as liked
-        ORDER BY timestamp ASC
-        SKIP toInteger($skip)
-        LIMIT toInteger($limit)
-        `,
-        {
-            categoryName: category,
-            sceneName: scene,
-            targetID: parseInt(targetID),
-            userID: userID,
-            skip: parseInt(start),
-            limit: parseInt(end)- parseInt(start)
-        },
-        {
-            database: 'neo4j'
+    if(dbDriver) {
+        const {records: commentRecords} = await dbDriver.executeQuery(
+            `
+            MATCH (comment:COMMENT)-[:COMMENTED_ON | REPLIED_TO ]
+            ->(target)-[:POSTED_ON | REPLIED_TO | COMMENTED_ON *]
+            ->(:CATEGORY {name: $categoryName})<-[:HAS_CATEGORY]
+            -(:SCENE {name: $sceneName})
+            WHERE id(target) = toInteger($targetID)
+            MATCH (author:USER)-[:COMMENTED]->(comment)
+            OPTIONAL MATCH (:USER)-[like:LIKED]->(comment)
+            OPTIONAL MATCH (user:USER {authID: $userID})-[userLiked:LIKED]->(comment)
+            RETURN comment.content as content, comment.timestamp as timestamp, id(comment) as commentID, COLLECT(author) as author, COUNT(like) as likes, COUNT(userLiked) as liked
+            ORDER BY timestamp ASC
+            SKIP toInteger($skip)
+            LIMIT toInteger($limit)
+            `,
+            {
+                categoryName: category,
+                sceneName: scene,
+                targetID: parseInt(targetID),
+                userID: userID,
+                skip: parseInt(start),
+                limit: parseInt(end)- parseInt(start)
+            },
+            {
+                database: 'neo4j'
+            }
+        )
+
+        let comments = []
+
+        for(let comment of commentRecords) {
+            comments.push(commentNodeToCommentObject(comment))
         }
-    )
 
-    let comments = []
-
-    for(let comment of commentRecords) {
-        comments.push(commentNodeToCommentObject(comment))
+        return comments;
+    } else {
+        return [
+            {
+                content: "COMMENT",
+                commentID: 2,
+                timestamp: Date.now(),
+                author: "caelouwho",
+                likes: 0,
+                liked: false,
+                replies: []
+            }
+        ]
     }
-
-    return comments;
 }
 
 module.exports = {
