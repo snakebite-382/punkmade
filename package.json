@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "@mdit/plugin-img-lazyload": "^0.5.0",
-    "@mdit/plugin-sub": "^0.5.0",
-    "@mdit/plugin-sup": "^0.5.0",
-    "@mdit/plugin-tasklist": "^0.5.0"
-  }
-}
