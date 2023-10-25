@@ -11,6 +11,7 @@ function getDriver() {
         console.log("DB CONNECTED")
     } catch(err) {
         console.log(`Connection error\n${err}\nCause: ${err.cause}`)
+        driver = false;
     }  
     return driver
 }
