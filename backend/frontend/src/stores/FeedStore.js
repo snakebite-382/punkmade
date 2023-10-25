@@ -135,6 +135,7 @@ export const feedStore = defineStore("feed", {
                     for(let i = start; i < end; i++) {
                         if(!run) break;
                         let result = await socket.emitWithAck('get posts', this.currentScene, this.currentCategory, i, i+1)
+
                         if(result.length > 0) {
                             if(pushToLazyStack) {
                                 this.lazyStack.push(result[0])
@@ -233,6 +234,7 @@ export const feedStore = defineStore("feed", {
                 this.throwError("Socket not authenticated")
             }
             this.cleanToaster()
+            log("Comments Fetched")
         },
 
         async createPost(post) {
@@ -322,38 +324,52 @@ export const feedStore = defineStore("feed", {
 
         async likeComment(parents) {
             let post = this.getPostById(parseInt(parents[0]))
+            
+            if(post.posting) {
+                return
+            }
+            this.showProgress("Liking");
+            log(`Liking comment with parents ${parents.join(', ')}`)
 
-            if(!post.posting) {
-                this.showProgress("Liking");
-                log(`Liking comment with parents ${parents.join(', ')}`)
-
-                let comment = this.getComment(parents);
+            let comment = this.getComment(parents);
+            let wasLiked = comment.liked;
+            if(comment.liked) {
+                comment.likes--;
+                
+            } else {
                 comment.likes++;
-                comment.liked = true;
+            }
+            
+            comment.liked = !comment.liked;
 
-                const response = await fetch(`${API_URL}/like_comment/`, {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': "application/json",
-                        "Authorization": `Bearer ${this.token}`
-                    },
-                    body: JSON.stringify({
-                        sceneID: this.currentScene,
-                        category: this.currentCategory,
-                        targetID: comment.commentID,
-                    })
+            const response = await fetch(`${API_URL}/like_comment/`, {
+                method: "POST",
+                headers: {
+                    'Content-Type': "application/json",
+                    "Authorization": `Bearer ${this.token}`
+                },
+                body: JSON.stringify({
+                    sceneID: this.currentScene,
+                    category: this.currentCategory,
+                    targetID: comment.commentID,
                 })
-    
-                if(response.status !==200) {
-                    // if we didn't get the ok
-                    this.throwError("Couldn't like comment, unrolling optimistic update");
-                    // rollback the optimistic change
-                    comment.likes--;
-                    comment.liked = false;
-                } else {
-                    log("Successfully liked/unliked post")
-                }
+            })
 
+            if(response.status !==200) {
+                // if we didn't get the ok
+                this.throwError("Couldn't like comment, unrolling optimistic update");
+                // rollback the optimistic change
+       
+                comment.liked = wasLiked;
+                if(wasLiked) {
+                    comment.likes++;
+                } else {
+                    comment.likes--;
+                }
+            } else {
+                log("Successfully liked/unliked comment")
+                const data = await response.json(); // returns true if already liked
+                console.log(data, comment)
                 this.cleanToaster()
             }
         },

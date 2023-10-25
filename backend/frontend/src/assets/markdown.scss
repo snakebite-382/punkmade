@@ -31,4 +31,24 @@
     h6 {
         @apply tw-underline tw-decoration-red
     }
+
+    ol {
+        @apply tw-list-decimal
+    }
+
+    ul {
+        @apply tw-list-disc
+    }
+
+    ul li::marker {
+        content: "‣ ";
+    }
+
+    ol, ul {
+        @apply tw-list-inside
+    }
+
+    a {
+        @apply tw-text-green tw-underline
+    }
 }

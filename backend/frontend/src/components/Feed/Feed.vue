@@ -1,7 +1,7 @@
 <template>
-    <div id="Feed" class="tw-min-h-screen">
-        <div v-show="!isLoading" v-if="feedStore.initialized" class="tw-grid grid">
-            <Nav class="sidebar tw-flex-col tw-col-start-1 tw-justify-start tw-border-red tw-border-solid tw-border-4 tw-h-fit tw-p-4 tw-text-xl tw-row-start-1 tw-z-10">
+    <div id="Feed" class="">
+        <div v-show="!isLoading" v-if="feedStore.initialized" :class="`${showCreatePost ? '' : 'tw-grid grid'} tw-min-h-full`">
+            <Nav :class="`sidebar tw-flex-col tw-col-start-1 tw-justify-start tw-border-red tw-border-solid tw-border-4 tw-h-fit tw-p-4 tw-text-xl tw-row-start-1 tw-z-10 ${showCreatePost ? 'tw-h-full' : ''}`">
                 <SceneNav :scenes="returnNavScenes()" @nav-item-click="sceneNavClick" id="Scene-Nav"/>
                 <CategoryNav :categories="returnNavCategories()" @nav-item-click="categoriesNavClick" id="Category-Nav"/>
                 <div class="creation tw-text-lg tw-mt-2">
@@ -10,7 +10,7 @@
                 </div>
             </Nav>
             
-            <div class="center tw-col-start-1 tw-col-span-2 tw-row-start-1 tw-flex tw-flex-col tw-items-center">
+            <div class="center tw-col-start-1 tw-col-span-2 tw-row-start-1 tw-flex tw-flex-col tw-items-center" v-show="!showCreatePost">
                 <Posts/>
             </div>
         </div>

@@ -1,6 +1,11 @@
 <template>
     <form @submit="onSubmit">
-        <textarea type="text" placeholder="post something..." name="content" id="content-input" v-model="content" autocomplete="off" class="tw-bg-grey tw-p-1 tw-border-solid tw-border-2 tw-border-red tw-leading-tight"/>
+        <textarea 
+        type="text" placeholder="post something..." name="content" id="content-input" v-model="content" autocomplete="off" 
+        class="tw-bg-grey tw-p-1 tw-border-solid tw-border-2 tw-border-red tw-leading-tight tw-w-full tw-h-[50vh] tw-resize-y"
+        maxlength="500"
+        />
+        <div class="counter">{{ content.length }}/500 characters</div>
         <br><StyledBtn type="submit">post</StyledBtn>
         <div class="preview markdown" v-html="converter.render(content)">
         </div>
@@ -24,7 +29,7 @@ export default {
 
     data() {
         return {
-            content: `# Hello \n ## My Dears`,
+            content: `# Post something... \n You can use **Markdown** or plain text \n ![favicon](favicon.ico)`,
             converter: new MarkdownIt()
         }
     },

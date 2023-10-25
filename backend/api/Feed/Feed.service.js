@@ -1,5 +1,4 @@
 const {dbDriver} = require('../db.js')
-const {postNodeToPostObject} = require('../Websockets.js')
 
 async function get_init_feed_data(req, res) {
     let userID = req.auth.payload.sub
@@ -162,7 +161,7 @@ async function likeComment(req, res) {
         {database: 'neo4j'}
     )
 
-    res.send(true)
+    res.send(alreadyLiked)
 }
 
 async function createComment(req, res) {

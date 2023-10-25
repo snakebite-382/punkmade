@@ -1,5 +1,5 @@
 <template>
-    <div class="post tw-border-solid tw-border-2 tw-border-red tw-p-3 tw-my-2">
+    <div class="post thin-border tw-p-3 tw-my-2">
         <h2 class="creator tw-text-xl tw-text-center">{{ post.author }}
         <Seperator class="tw-w-full tw-my-1"/>
         </h2>
