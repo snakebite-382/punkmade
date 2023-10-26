@@ -2,7 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import { authGuard } from "@auth0/auth0-vue";
 import HomeView from '../views/HomeView.vue';
 import SceneManager from '../views/SceneManager.vue';
-import LoginCallback from '../views/LoginCallback.vue'
+import LoginCallback from '../views/LoginCallback.vue';
+import Library from '../views/Library.vue';
 
 export const routes = [
   {
@@ -20,6 +21,12 @@ export const routes = [
     path:'/login-callback',
     name: 'login-callback',
     component: LoginCallback,
+    beforeEnter: authGuard
+  },
+  {
+    path: '/library',
+    name: 'Library',
+    component: Library,
     beforeEnter: authGuard
   }
 ]

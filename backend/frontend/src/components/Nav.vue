@@ -1,6 +1,6 @@
 <template>
     <ul class="nav-bar tw-flex">
-        <li v-for="(item, index) in items" :key="index" :class="(active === item.name || active === item.path ? `tw-underline tw-decoration-red tw-underline-offset-8` : ``) + 'hover:tw-text-white-hover'">
+        <li v-for="(item, index) in items" :key="index" :class="(active === item.name || active === item.path ? `underline ` : ``) + 'hover:tw-text-white-hover'">
             <router-link 
                 v-if="!!item.path"
                :to="item.path"

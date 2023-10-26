@@ -1,5 +1,5 @@
 import { defineStore } from "pinia"
-import { state, socket } from '@/socket';
+import { socket } from '@/socket';
 
 const API_URL = "http://localhost:5000/api/feed";
 const TICK_RATE = 375;

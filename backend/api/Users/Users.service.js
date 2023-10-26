@@ -3,6 +3,11 @@ const auth0Manager = require('../managementAPI.js');
 const {dbDriver} = require('../db.js')
 
 async function loggedin(req, res) {
+    if(!dbDriver) {
+        res.send(true)
+        return 
+    }
+
     let userID = req.auth.payload.sub
 
     let auth0User = await auth0Manager.getUser({id: userID})
@@ -30,6 +35,14 @@ async function loggedin(req, res) {
 }
 
 async function userinfo (req, res) {
+    if(!dbDriver) {
+        res.send({
+            nickname: 'caelouwho'
+        })
+
+        return;
+    }
+
     let userID = req.auth.payload.sub
 
     const { records } = await dbDriver.executeQuery(

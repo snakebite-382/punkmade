@@ -1,11 +1,14 @@
 <template>
     <div class="comment tw-my-2">
         <span class="author tw-text-base">{{ comment.author }}</span> : <span class="content tw-text-sm">{{ comment.content }}</span>
-        <span class="interaction tw-text-sm">
+        <span class="reply-interaction tw-text-sm">
             <StyledBtn @click="handleReply" class="tw-p-0.5 tw-mx-2">{{ (isReplying()) ? 'stop replying' : 'reply'}}</StyledBtn>
             <StyledBtn @click="showReplies = !showReplies" class="tw-p-0.5 tw-mr-2"> {{ showReplies ? 'stop viewing replies' : 'view replies' }}</StyledBtn>
-            <LikeButton @post-liked="feedStore.likeComment(expectedParents)" :size='16' :fill="comment.liked ? 'red' : 'none'" outline="black"/>
         </span>
+        <span class="like-interaction">
+            {{ comment.likes }} <LikeButton @post-liked="feedStore.likeComment(expectedParents)" :size='18' :fill="comment.liked ? 'red' : 'none'" outline="black"/>
+        </span>
+        
         <div :class="'replies ' + (depth > maxReplyDepth ? 'flattened' : 'unflattened') " v-if="comment.replies.length > 0 && showReplies">
             <Comment v-for="reply in comment.replies" :comment="reply" :key="reply.commentID" :depth="depth + 1" :parents="expectedParents.slice(1)" :postID="postID"/>
         </div>
@@ -74,7 +77,7 @@ export default {
     margin-left: 16px;
 }
 
-svg {
+/* svg {
     margin-top: -10px;
-}
+} */
 </style>

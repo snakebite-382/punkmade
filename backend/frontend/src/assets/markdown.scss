@@ -29,7 +29,8 @@
     h4,
     h5,
     h6 {
-        @apply tw-underline tw-decoration-red
+        @apply tw-underline tw-decoration-red;
+        text-underline-offset: 0.35rem;
     }
 
     ol {

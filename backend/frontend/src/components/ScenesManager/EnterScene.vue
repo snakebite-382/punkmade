@@ -5,7 +5,7 @@
             <CreateMap :center="userLocation" :range="range" @update-pos="handleUpdate"/>
             <form @submit="handleSubmit" v-if="locationStore.mode === 'create'">
                 <label for="range">Range: </label>
-                <StyledInput type="number" id="range" name="range" min="1" max="30" v-model="range"/>
+                <StyledInput type="number" id="range" name="range" min="1" max="30" v-model="range" class="tw-ml-1"/>
                 <StyledBtn type="submit">Submit</StyledBtn>
             </form>
             <StyledBtn v-if="locationStore.mode === 'join'" @click="handleSubmit">Join {{ locationStore.selectedScene.name }}</StyledBtn>

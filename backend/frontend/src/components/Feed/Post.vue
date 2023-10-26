@@ -29,7 +29,7 @@ import CommentButton from './CommentButton.vue';
 import CommentSection from './CommentSection.vue';
 import Seperator from '../Reusable/Seperator.vue';
 
-import MarkdownIt from "markdown-it";
+import { converter } from '../../../markdown';
 
 import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
@@ -44,7 +44,7 @@ export default {
     data() {
         return {
             commentsOpen: false,
-            converter: new MarkdownIt()
+            converter,
         }
     },
 
