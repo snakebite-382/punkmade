@@ -4,12 +4,16 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { createAuth0 } from '@auth0/auth0-vue';
 
+import VueFeather from 'vue-feather';
+
 import VueGoogleMaps from '@fawmi/vue-google-maps';
 
 import App from './App.vue'
 import router from './router'
 
 const app = createApp(App)
+
+app.component(VueFeather.name, VueFeather);
 
 app.use(createPinia())
 

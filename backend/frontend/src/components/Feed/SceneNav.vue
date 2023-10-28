@@ -1,6 +1,6 @@
 <template>
     <div class="scene-nav tw-w-fit">
-        <span @click="expanded = !expanded">Scenes <Chevron :Down="expanded"/></span>
+        <span @click="expanded = !expanded">Scenes <vue-feather type="chevron-right" :class="`${expanded ? 'tw-rotate-90' : ' '}`"/></span>
         <Nav :items="scenes" @nav-item-click="(data) => {
             $emit('nav-item-click', data) 
         }" :active="feedStore.currentScene" class="tw-flex-col tw-ml-4" v-show="expanded"/>
@@ -11,7 +11,6 @@
 import Nav from '../Nav.vue';
 import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
-import Chevron from './Chevron.vue';
 
 export default {
     name: "SceneName",
@@ -31,8 +30,6 @@ export default {
     },
     components: {
         Nav,
-
-        Chevron
     },
 }
 </script>

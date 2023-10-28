@@ -8,3 +8,7 @@
 * {
     font-family: "Texturina" !important;
 }
+
+i.vue-feather {
+    @apply tw--mb-1.5
+}

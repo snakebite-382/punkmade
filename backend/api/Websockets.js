@@ -41,7 +41,15 @@ function HandleConnection(socket) {
             let comments = await getComments(socket.data_userID, scene, category, targetID, start, end);
             callback(comments);
         } else {
-            callback = false;
+            callback(false);
+        }
+    })
+
+    socket.on('get documents', async(scene, start, end, callback) => {
+        if(socket.data_authenticated) {
+            let documents = await getDocuments(scene, start, end)
+
+            callback(documents)
         }
     })
 
@@ -52,6 +60,44 @@ async function HandleDisconnect() {
     console.log(`socket disconnected`)
 }
 
+async function getDocuments(scene, start, end) {
+    start = parseInt(start);
+    end = parseInt(end)
+    const {records: documentRecords} = await dbDriver.executeQuery(
+        `MATCH (:SCENE {name: $scene})-[:HAS_DOCUMENT]->(doc:DOCUMENT)-[:HAS_PAGE]->(page:PAGE)
+        RETURN doc.title AS title, doc.timestamp AS timestamp, COLLECT(page) as pages 
+        ORDER BY timestamp DESC
+        SKIP toInteger($start)
+        LIMIT toInteger($end)
+        `,
+        {
+            scene,
+            start: start,
+            end: end - start,
+        },
+        {database: 'neo4j'}
+    )
+
+    let documents = [];
+
+    for(let document of documentRecords) {
+        let pages = [];
+
+        for(let page of document.get('pages')) {
+            pages.push({
+                content: page.properties.content
+            });
+        }
+        
+        documents.push({
+            title: document.get('title'),
+            timestamp: document.get('timestamp'),
+            pages,
+        })
+    }
+
+    return documents;
+}
 
 function postNodeToPostObject(post, author) {
     let id = post.get('postID').toNumber();

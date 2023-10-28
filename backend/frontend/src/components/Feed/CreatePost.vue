@@ -7,7 +7,7 @@
         />
         <div class="counter">{{ content.length }}/500 characters</div>
 
-        <br><StyledBtn type="submit">post</StyledBtn>
+        <StyledBtn type="submit" class="tw-mt-2 tw-mb-3">post</StyledBtn>
 
         <div class="preview markdown" v-html="converter.render(content)"></div>
     </form>

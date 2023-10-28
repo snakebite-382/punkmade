@@ -19,7 +19,9 @@
             </div>
 
             <div class="option-bar tw-flex tw-justify-between tw-w-full tw-mt-2">
-                <StyledBtn @click="prev"><Chevron :Right="false"/></StyledBtn> <StyledBtn @click="submit" class="tw-w-full tw-text-xl tw-mx-2" type="submit">Post</StyledBtn> <StyledBtn @click="next"><Chevron :Right="true"/></StyledBtn>
+                <StyledBtn @click="prev"><vue-feather type="chevron-right" class="tw-rotate-180 tw-p-0.5"/></StyledBtn>
+                <StyledBtn @click="submit" class="tw-w-full tw-text-xl tw-mx-2" type="submit">Post</StyledBtn>
+                <StyledBtn @click="next"><vue-feather type="chevron-right" class="tw-p-0.5"/></StyledBtn>
             </div>
         </form>
     </div>
@@ -28,7 +30,6 @@
 <script>
 import StyledInput from '../Reusable/StyledInput.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
-import Chevron from '../Feed/Chevron.vue';
 import {converter} from '../../../markdown'
 import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
@@ -48,7 +49,6 @@ export default {
 
     components: {
         StyledInput,
-        Chevron,
         StyledBtn
     },
 

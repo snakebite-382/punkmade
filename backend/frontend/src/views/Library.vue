@@ -4,8 +4,11 @@
             <StyledBtn @click="creating=!creating" class="tw-my-2">{{ creating ? 'Close' : "Create Document" }}</StyledBtn>
             <CreateDocument @submit-form="submit" v-show="creating"/>
 
-            <div class="tw-flex tw-flex-wrap" v-show="this.feedStore.documents && !creating ">
+            <div class="tw-grid tw-grid-cols-6" v-show="!creating ">
                 <!-- previews -->
+                <div class="prev-containter" v-for="doc of feedStore.libraryDocuments" id="document.timestamp">
+                    <PreviewDocument :doc="{title: doc.title, firstPage: doc.pages[0].content, timestamp: doc.timestamp}"/>
+                </div>
             </div>
 
             <StatusToaster/>
@@ -22,6 +25,7 @@ import CreateDocument from '../components/Library/CreateDocument.vue';
 import FullscreenLoading from '../components/Loading/Fullscreen.vue';
 import StatusToaster from '../components/Feed/StatusToaster.vue';
 import StyledBtn from '../components/Reusable/StyledBtn.vue';
+import PreviewDocument from '../components/Library/PreviewDocument.vue';
 
 import {feedStore} from '../stores/FeedStore';
 import { mapStores } from 'pinia';
@@ -33,7 +37,9 @@ export default {
     CreateDocument,
     FullscreenLoading,
     StatusToaster,
-    StyledBtn
+    StyledBtn,
+    PreviewDocument,
+
 },
 
     computed: {
@@ -51,6 +57,8 @@ export default {
     async created() {
         await this.feedStore.setToken(this.$auth0.getAccessTokenSilently);
         this.feedStore.libraryScene = this.scene;
+
+        this.feedStore.fetchDocuments(100);
 
         this.isLoading = false;
     },

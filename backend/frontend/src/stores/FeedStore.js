@@ -33,7 +33,8 @@ export const feedStore = defineStore("feed", {
             morePostsToLoad: false,
             lazyStack: [],
             docPostProgress: null,
-            libraryScene: ''
+            libraryScene: '',
+            libraryDocuments: []
         }
     },
 
@@ -76,6 +77,12 @@ export const feedStore = defineStore("feed", {
             this.status = status
         },
 
+        async initSocket() {
+            socket.connect()
+
+            this.socketAuthed = await socket.emitWithAck('auth', this.token);
+        },
+
         async fetchInit() {
             log('Fetching initial data')
             this.showProgress('Loading Feed');
@@ -95,9 +102,9 @@ export const feedStore = defineStore("feed", {
             })
             const data = await response.json();
 
-            socket.connect()
-
-            this.socketAuthed = await socket.emitWithAck('auth', this.token);
+            if(!this.socketAuthed) {
+                this.initSocket();
+            }
 
             // gives you the preferred scene and scenes
             this.preferredScene = data.preferredScene
@@ -199,6 +206,24 @@ export const feedStore = defineStore("feed", {
             }
 
             return target
+        },
+
+        async fetchDocuments(batchsize, gradual=false) {
+            if(!this.socketAuthed) {
+                await this.initSocket();
+            }
+
+            let start = this.libraryDocuments.length
+            let end = start + batchsize
+
+            if(this.socketAuthed) {
+                log('fetching docs')
+                if(!gradual) {
+                    let results = await socket.emitWithAck('get documents', this.libraryScene, start, end)
+
+                    this.libraryDocuments = results;
+                }
+            }            
         },
 
         async fetchComments(parents, batchsize, gradual) {
