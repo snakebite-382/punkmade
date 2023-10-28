@@ -230,17 +230,17 @@ async function createDocument(req, res) {
         {database: 'neo4j'}
     )
 
-    console.log(documentRecords[0].get('title'))
-
-    for(let page of formData.pages) {
+    for(let i = 0; i < formData.pages.length; i++) {
+        let page = formData.pages[i];
         if(page.length > 0) {
             console.log(page)
             let {records: pageRecords} = await dbDriver.executeQuery(
                 `MATCH (document:DOCUMENT {title: $title})
-                CREATE (document)-[:HAS_PAGE]->(:PAGE {content: $content})
+                CREATE (document)-[:HAS_PAGE]->(:PAGE {content: $content, index: $index})
                 `,
                 {
                     title: documentRecords[0].get('title'),
+                    index: i,
                     content: page
                 },
                 {database: 'neo4j'}
@@ -251,6 +251,32 @@ async function createDocument(req, res) {
     res.send(true)
 }
 
+async function getDocument(req, res) {
+    const {records: documentRecords} = await dbDriver.executeQuery(
+        `MATCH (document:DOCUMENT)-[:HAS_PAGE]->(page:PAGE)
+        WHERE ID(document) = toInteger($docID)
+        RETURN document.title as title, document.timestamp as timestamp, COLLECT(page) as pages
+        `,
+        {
+            docID: req.params.docID,
+        },
+        {database: 'neo4j'}
+    )
+
+    let pages = [];
+
+    for(let page of documentRecords[0].get('pages')) {
+        pages[parseInt(page.properties.index)] = page.properties.content
+    }
+
+    res.send(JSON.stringify({
+        title: documentRecords[0].get('title'),
+        timestamp: documentRecords[0].get('timestamp'),
+        pages,
+        loaded: true
+    }))
+}
+
 module.exports = {
     get_init_feed_data,
     createPost,
@@ -258,4 +284,5 @@ module.exports = {
     likeComment,
     createComment,
     createDocument,
+    getDocument,
 }

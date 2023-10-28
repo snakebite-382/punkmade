@@ -4,6 +4,7 @@ import HomeView from '../views/HomeView.vue';
 import SceneManager from '../views/SceneManager.vue';
 import LoginCallback from '../views/LoginCallback.vue';
 import Library from '../views/Library.vue';
+import Document from '../views/Document.vue'
 
 export const routes = [
   {
@@ -27,7 +28,12 @@ export const routes = [
     path: '/library',
     name: 'Library',
     component: Library,
-    beforeEnter: authGuard
+    beforeEnter: authGuard,
+  },
+  {
+    path: '/library/document',
+    name: 'Document',
+    component: Document
   }
 ]
 

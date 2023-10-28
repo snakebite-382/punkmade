@@ -1,11 +1,13 @@
 const express = require("express");
 const {checkJwt} = require("../checkjwt.js");
 
-const {get_init_feed_data, createPost, likePost, likeComment, createComment, createDocument} = require("./Feed.service.js")
+const {get_init_feed_data, createPost, likePost, likeComment, createComment, createDocument, getDocument} = require("./Feed.service.js")
 
 const router = express.Router();
 
 router.get("/get_feed_init_data/", checkJwt, get_init_feed_data);
+
+router.get('/get_document/:docID', getDocument)
 
 router.post("/create_post/", checkJwt, createPost)
 

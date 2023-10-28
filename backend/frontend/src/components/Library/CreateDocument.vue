@@ -34,13 +34,15 @@ import {converter} from '../../../markdown'
 import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
 
+const defaultFirstPage = '# New post \n use **markdown** to make something worthwhile'
+
 export default {
     name: 'CreateDocument',
 
     data() {
         return {
             title: 'Title...',
-            pages: ['# New post \n use **markdown** to make something worthwhile'],
+            pages: [defaultFirstPage],
             pageIndex: 0,
             MAX_PAGES: 10,
             converter,
@@ -89,7 +91,7 @@ export default {
             let success = await this.feedStore.docPostProgress();
 
             if(success) {
-                this.pages = ['']
+                this.pages = [defaultFirstPage]
                 this.pageIndex = 0;
             }
         },

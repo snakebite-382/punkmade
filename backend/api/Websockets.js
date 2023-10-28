@@ -65,7 +65,7 @@ async function getDocuments(scene, start, end) {
     end = parseInt(end)
     const {records: documentRecords} = await dbDriver.executeQuery(
         `MATCH (:SCENE {name: $scene})-[:HAS_DOCUMENT]->(doc:DOCUMENT)-[:HAS_PAGE]->(page:PAGE)
-        RETURN doc.title AS title, doc.timestamp AS timestamp, COLLECT(page) as pages 
+        RETURN doc.title AS title, doc.timestamp AS timestamp, COLLECT(page) as pages, ID(doc) as id
         ORDER BY timestamp DESC
         SKIP toInteger($start)
         LIMIT toInteger($end)
@@ -84,13 +84,12 @@ async function getDocuments(scene, start, end) {
         let pages = [];
 
         for(let page of document.get('pages')) {
-            pages.push({
-                content: page.properties.content
-            });
+            pages[parseInt(page.properties.index)] = page.properties.content
         }
         
         documents.push({
             title: document.get('title'),
+            id: document.get('id').toNumber(),
             timestamp: document.get('timestamp'),
             pages,
         })

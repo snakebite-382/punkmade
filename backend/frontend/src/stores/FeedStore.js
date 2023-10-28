@@ -103,7 +103,7 @@ export const feedStore = defineStore("feed", {
             const data = await response.json();
 
             if(!this.socketAuthed) {
-                this.initSocket();
+                await this.initSocket();
             }
 
             // gives you the preferred scene and scenes
