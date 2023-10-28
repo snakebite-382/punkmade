@@ -15,6 +15,7 @@ export default {
           'yellow': "#e0ce07",
           'green': "#2a9403",
           'grey-hover': "#3E3E3E",
+          'code': "#BABABA",
       },
       extend: {},
   },

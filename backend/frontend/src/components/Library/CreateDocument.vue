@@ -30,6 +30,8 @@ import StyledInput from '../Reusable/StyledInput.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
 import Chevron from '../Feed/Chevron.vue';
 import {converter} from '../../../markdown'
+import { feedStore } from '../../stores/FeedStore';
+import { mapStores } from 'pinia';
 
 export default {
     name: 'CreateDocument',
@@ -50,32 +52,60 @@ export default {
         StyledBtn
     },
 
+    computed: {
+        ...mapStores(feedStore)
+    },
+
     methods: {
         submitEvent(e) {
             e.preventDefault();
         },
 
-        submit(e) {
+        async submit(e) {
+            console.log("submit")
             e.preventDefault();
+            // if the last page is empty
             if(this.pages[this.pages.length-1].length === 0) {
+                // move back one and remove the empty last page
                 if(this.pageIndex === this.pages.length-1) {
                     this.pageIndex--;
                 }
                 this.pages.pop()
             } 
+
+            let totalChars = 0;
+
+            for(let page of this.pages) {
+                totalChars += page.length;
+            }
+
+            if(totalChars <= 500) {
+                alert("This document is too short, it can fit in a post, the library is made for larger informational docs");
+                return
+            }
+
+            this.$emit('submit-form', {pages: this.pages, title: this.title}) 
+
+            let success = await this.feedStore.docPostProgress();
+
+            if(success) {
+                this.pages = ['']
+                this.pageIndex = 0;
+            }
         },
 
         input() {
             if(this.pages[this.pageIndex].length === 0) {
+                // checks If the page length is 0, if it is and theres more pages with text the next page with text becomes the current page
                 for(let i = this.pageIndex +1; i < this.pages.length; i++) {
                     if(this.pages[i].length !== 0) {
                         this.pages[this.pageIndex] = this.pages[i];
 
-                        for(let j = i; j < this.pages.length; j++) {
+                        for(let j = i; j < this.pages.length; j++) { // more everything up
                             this.pages[j-1] = this.pages[j]
                         }
 
-                        this.pages.pop()
+                        this.pages.pop() // remove last page 
 
                         return
                     }

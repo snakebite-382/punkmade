@@ -1,10 +1,10 @@
 <template>
     <div id="Feed" class="">
         <div v-show="!isLoading" v-if="feedStore.initialized" :class="`${showCreatePost ? '' : 'tw-grid grid'} tw-min-h-full`">
-            <Nav :class="`sidebar tw-flex-col tw-col-start-1 tw-justify-start tw-border-red tw-border-solid tw-border-4 tw-h-fit tw-p-4 tw-text-xl tw-row-start-1 tw-z-10 ${showCreatePost ? 'tw-h-full' : ''}`">
+            <Nav :class="`sidebar tw-flex-col tw-col-start-1 tw-justify-start tw-border-red tw-border-solid tw-border-4 tw-h-fit tw-p-4 tw-text-xl tw-row-start-1 tw-z-10 tw-w-fit ${showCreatePost ? 'tw-h-full' : ''}`">
                 <SceneNav :scenes="returnNavScenes()" @nav-item-click="sceneNavClick" id="Scene-Nav"/>
                 <CategoryNav :categories="returnNavCategories()" @nav-item-click="categoriesNavClick" id="Category-Nav"/>
-                <span><a :href="`/library?scene=${encodeURIComponent(feedStore.currentScene)}`">Library</a></span>
+                <span><router-link :to="`/library?scene=${encodeURIComponent(feedStore.currentScene)}`">Library</router-link></span>
                 <div class="creation tw-text-lg tw-mt-2">
                     <StyledBtn @click="toggleCreatePost" class="tw-m">{{ showCreatePost ? "close" : "post something" }}</StyledBtn> 
                     <CreatePost v-show="showCreatePost" class="tw-mt-2"/>
@@ -14,11 +14,11 @@
             <div class="center tw-col-start-1 tw-col-span-2 tw-row-start-1 tw-flex tw-flex-col tw-items-center" v-show="!showCreatePost">
                 <Posts/>
             </div>
+            <StatusToaster/>
         </div>
         <div v-show="isLoading">
             <FullscreenLoading/>
         </div>
-        <StatusToaster/>
     </div>
 </template>
 

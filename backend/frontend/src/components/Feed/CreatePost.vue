@@ -30,7 +30,26 @@ export default {
 
     data() {
         return {
-            content: `# Post something... \n You can use **Markdown** or plain text \n ![favicon](favicon.ico)`,
+            content: `# Hello
+## My Dears
+1) OL
+* UL
+
+[I'm an inline-style link](https://www.google.com)
+
+\`code\`
+
+| Tables        | Are           | Cool |
+| ------------- |:-------------:| -----:|
+| col 3 is      | right-aligned | $1600 |
+| col 2 is      | centered      |   $12 |
+| zebra stripes | are neat      |    $1 |
+
+> Blockquotes are very handy in email to emulate reply text.
+> This line is part of the same quote.
+
+---
+`,
             converter
         }
     },

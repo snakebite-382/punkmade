@@ -26,12 +26,14 @@ export const feedStore = defineStore("feed", {
             user: {},
             initialized: false,
             newCommentParents: [''],
-            status: '',
+            status: null,
             toasting: false,
             socketAuthed: false,
             posting: false,
             morePostsToLoad: false,
             lazyStack: [],
+            docPostProgress: null,
+            libraryScene: ''
         }
     },
 
@@ -285,6 +287,30 @@ export const feedStore = defineStore("feed", {
                 this.throwError("Already Posting")
             }
         }, 
+
+        async createDocument(title, pages) {
+            this.docPostProgress = async () => {
+                this.showProgress("Creating Document")
+                const request = await fetch('http://localhost:5000/api/feed/create_document/', {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': "application/json",
+                        "Authorization": `Bearer ${this.token}`
+                    },
+                    body: JSON.stringify({
+                        sceneID: this.libraryScene,
+                        title,
+                        pages,
+                    })
+                })
+
+                let data = await request.json();
+
+                this.cleanToaster();
+
+                return data;
+            }
+        },
 
         async likePost(postIndex) {
             // optimistically like post

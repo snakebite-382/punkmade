@@ -52,4 +52,30 @@
     a {
         @apply tw-text-green tw-underline
     }
+
+    code {
+        @apply tw-bg-grey-hover tw-text-code
+    }
+
+    blockquote {
+        @apply tw-pl-4 tw-bg-grey-hover;
+        display: inline-block
+    }
+
+    blockquote::before, blockquote::after {
+        content: '"';
+        display: inline;
+    }
+
+    table {
+        @apply tw-table-auto tw-border-red tw-border-2 tw-border-solid tw-border-spacing-0 tw-border-collapse tw-m-2 tw-text-center
+    }
+
+    td, th {
+        @apply tw-border-red tw-border-2 tw-border-solid tw-p-2
+    }
+
+    hr {
+        @apply tw-h-1 tw-bg-gradient-to-r tw-from-grey tw-via-grey-hover tw-to-grey tw-w-full tw-my-4
+    }
 }

@@ -209,10 +209,53 @@ async function createComment(req, res) {
     res.send(newPost)
 }
 
+async function createDocument(req, res) {
+    let userID = req.auth.payload.sub;
+    let formData = req.body;
+
+    let {records: documentRecords} = await dbDriver.executeQuery(
+        `MATCH (user:USER {authID: $authID})
+        -[:PART_OF]->(scene:SCENE {name: $sceneName})
+        MERGE (user)
+        -[:POSTED]->(doc:DOCUMENT {title:$title, timestamp: $timestamp})
+        <-[:HAS_DOCUMENT]-(scene)
+        return doc.title as title
+        `,
+        {
+            authID: userID,
+            sceneName: formData.sceneID,
+            title: formData.title,
+            timestamp: Date.now(),
+        },
+        {database: 'neo4j'}
+    )
+
+    console.log(documentRecords[0].get('title'))
+
+    for(let page of formData.pages) {
+        if(page.length > 0) {
+            console.log(page)
+            let {records: pageRecords} = await dbDriver.executeQuery(
+                `MATCH (document:DOCUMENT {title: $title})
+                CREATE (document)-[:HAS_PAGE]->(:PAGE {content: $content})
+                `,
+                {
+                    title: documentRecords[0].get('title'),
+                    content: page
+                },
+                {database: 'neo4j'}
+            )
+        }
+    }
+
+    res.send(true)
+}
+
 module.exports = {
     get_init_feed_data,
     createPost,
     likePost,
     likeComment,
-    createComment
+    createComment,
+    createDocument,
 }
