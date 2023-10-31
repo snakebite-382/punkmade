@@ -5,6 +5,8 @@ import SceneManager from '../views/SceneManager.vue';
 import LoginCallback from '../views/LoginCallback.vue';
 import Library from '../views/Library.vue';
 import Document from '../views/Document.vue'
+import Onboard from '../views/Onboard.vue';
+import Profile from '../views/Profile.vue';
 
 export const routes = [
   {
@@ -34,6 +36,18 @@ export const routes = [
     path: '/library/document',
     name: 'Document',
     component: Document
+  },
+  {
+    path: '/onboard',
+    name: 'Onboard',
+    component: Onboard,
+    beforeEnter: authGuard,
+  },
+  {
+    path: '/profile',
+    name: "Profile",
+    component: Profile,
+    beforeEnter: authGuard,
   }
 ]
 

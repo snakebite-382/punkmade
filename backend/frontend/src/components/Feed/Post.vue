@@ -1,8 +1,9 @@
 <template>
     <div class="post thin-border tw-p-3 tw-my-2">
-        <h2 class="creator tw-text-xl tw-text-center">{{ post.author }}
+        <router-link :to="`/profile?user=${post.author.userID}`" class="creator tw-text-xl tw-text-center">
+            {{ post.author.name }}
+        </router-link>
         <Seperator class="tw-w-full tw-my-1"/>
-        </h2>
         <h3 class="content tw-text-lg">
             <div class="markdown" v-html="converter.render(post.content)">
 

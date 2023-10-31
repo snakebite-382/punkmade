@@ -2,10 +2,10 @@
     <div id="Create-Scene">
         <div class="loaded" v-if="!isLoading">
             <h1 class="tw-text-xl">Create Scene</h1>
-            <CreateMap :center="userLocation" :range="range" @update-pos="handleUpdate"/>
+            <CreateMap :center="userLocation" :range="parseFloat(range)" @update-pos="handleUpdate"/>
             <form @submit="handleSubmit" v-if="locationStore.mode === 'create'">
                 <label for="range">Range: </label>
-                <StyledInput type="number" id="range" name="range" min="1" max="30" v-model="range" class="tw-ml-1"/>
+                <StyledInput type="number" id="range" name="range" min="10" max="30" v-model="range" class="tw-ml-1"/>
                 <StyledBtn type="submit">Submit</StyledBtn>
             </form>
             <StyledBtn v-if="locationStore.mode === 'join'" @click="handleSubmit">Join {{ locationStore.selectedScene.name }}</StyledBtn>
@@ -46,19 +46,21 @@ export default {
     },
 
     async created() {
-        navigator.geolocation.getCurrentPosition(position=> { // get the users location and save it
+        navigator.geolocation.getCurrentPosition(async position=> { // get the users location and save it
             this.userLocation = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
             }
             this.selectedPos = this.userLocation;
+
+
+            await this.getScenes();
+
+            this.isLoading = false;
+        
         }, e => {
             console.error(e)
         });
-
-        await this.getScenes();
-
-        this.isLoading = false;
     },
 
     methods: {
@@ -110,7 +112,7 @@ export default {
         },
 
         async getScenes() {
-           await this.locationStore.getScenes(this.$auth0.getAccessTokenSilently);
+           await this.locationStore.getScenes(this.$auth0.getAccessTokenSilently, this.userLocation);
         }
     },
 }

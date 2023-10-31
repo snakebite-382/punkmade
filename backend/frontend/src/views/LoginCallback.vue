@@ -3,6 +3,8 @@
 </template>
 
 <script>
+import { navRoutes } from '../router';
+
 export default {
     name: 'login-callback',
     data() {
@@ -19,10 +21,12 @@ export default {
                 }
         })
 
-        let data = await result.json()
+        let data = await result.json();
 
         if(data) {
             this.$router.push('/')
+        } else {
+            this.$router.push('/onboard')
         }
     }
 }

@@ -11,7 +11,8 @@ export const locationStore = defineStore('location', {
             coords: [],
             scenes: [],
             selectedScene: {},
-            mode: 'create'
+            mode: 'create',
+            sceneIn: {}
         }
     },
 
@@ -48,11 +49,12 @@ export const locationStore = defineStore('location', {
             return false
         },
 
-        async getScenes(tokenfn) {
+        async getScenes(tokenfn, userCoords) {
+            console.log(userCoords.lng)
             console.log(logPre + "Fetching Scenes")
             let token = await tokenfn();
 
-            let response = await fetch(API + "/get_scenes", {
+            let response = await fetch(API + `/get_scenes/${userCoords.lat},${userCoords.lng}`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -63,7 +65,11 @@ export const locationStore = defineStore('location', {
             this.scenes = data;
             this.scenes.forEach(scene => {
                 scene.color = randColor();
-                scene.accent = randColor()
+                scene.accent = randColor();
+                if(scene.inSceneRange) {
+                    this.selectedScene = scene;
+                    this.mode = 'join'
+                }
             });
             // add caching
         },

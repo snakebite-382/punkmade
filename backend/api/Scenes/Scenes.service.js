@@ -39,42 +39,97 @@ async function fetchReverseGeocode(lat, lng) {
 }
 
 async function create(req, res) {
-    const formData = req.body
+    const formData = req.body;
 
-    // get the name (cuz we don't trust users, grrrr)
-    let name = await fetchReverseGeocode(...formData.center); 
-    name = name.locality + " Punk"
+    if(formData.range > 30) {
+        formData.range = 30;
+    } else if(formData.range < 10) {
+        formData.range = 10;
+    }
 
-    let userID = req.auth.payload.sub;
+    let invalid = false;
 
-    await dbDriver.executeQuery(
-        `MATCH (user:USER {authID: $authID}) 
-        MERGE (scene:SCENE {name: $sceneName}) 
-        SET scene.center = $center, scene.range = $range
-        CREATE (user)-[:PART_OF]->(scene)
-        MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'general'})
-        MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'art/music'}) 
-        MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'political'})`,
-        {
-            authID: userID,
-            sceneName: name,
-            center: formData.center,
-            range: formData.range
-        },
+    if(center[0] === NaN || typeof center[0] != 'number') {
+        res.send(false)
+        return
+    }
+
+    if(center[1] === NaN || typeof center[1] != 'number') {
+        res.send(false)
+        return
+    }
+
+    const {records: sceneRecords} = await dbDriver.executeQuery(
+        'MATCH (scene:SCENE) RETURN scene.name, scene.center, scene.range',
+        {},
         {database: 'neo4j'}
     )
 
-    await preferredSceneChecking(userID, name)
-    
-    res.send(true) // send true if it worked
+    for(scene of sceneRecords) {
+        let sceneCenter = scene.get('scene.center');
+
+        if(tooClose(formData.center[0], formData.center[1], sceneCenter[0], sceneCenter[1], scene.get('scene.range'))) {
+            invalid = true;
+        }
+    }
+
+    if(!invalid) {
+        // get the name (cuz we don't trust users, grrrr)
+        let name = await fetchReverseGeocode(...formData.center); 
+        name = name.locality + " Punk"
+
+        let userID = req.auth.payload.sub;
+
+        await dbDriver.executeQuery(
+            `MATCH (user:USER {authID: $authID}) 
+            MERGE (scene:SCENE {name: $sceneName}) 
+            SET scene.center = $center, scene.range = $range
+            CREATE (user)-[:PART_OF]->(scene)
+            MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'general'})
+            MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'art/music'}) 
+            MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'political'})`,
+            {
+                authID: userID,
+                sceneName: name,
+                center: formData.center,
+                range: formData.range
+            },
+            {database: 'neo4j'}
+        )
+
+        await preferredSceneChecking(userID, name)
+        
+        res.send(true) // send true if it worked
+    } else {
+        console.log("INVALID")
+    }
 }
 
 async function get_locality(req, res) {
     let latLng = req.params.latlng.split(",")
+
+    if(latLng[0] === NaN || typeof latLng[0] != 'number') {
+        res.send(false)
+        return
+    }
+    if(latLng[1] === NaN || typeof latLng[1] != 'number') {
+        res.send(false)
+        return
+    }
+
     res.send(await fetchReverseGeocode(...latLng)) // this is just so we can send geocode info from our own api without exposing secrets
 }
 
 async function get_scenes(req, res) {
+    let userLat = parseFloat(req.params.p1.split(',')[0]);
+    let userLon = parseFloat(req.params.p1.split(',')[1]);
+
+    if(userLat === NaN || userLon === NaN) {
+        res.send(false)
+        return 
+    }
+
+    console.log(userLat, userLon)
 
     const {records} = await dbDriver.executeQuery(
         'MATCH (scene:SCENE) RETURN scene.name, scene.center, scene.range',
@@ -85,10 +140,19 @@ async function get_scenes(req, res) {
     let scenes = []
 
     records.forEach(record => {
+        let center = record.get('scene.center');
+        let range = record.get('scene.range');
+
+        let lat2 = center[0];
+        let lon2 = center[1];
+
+        
+
         scenes.push({
             name: record.get('scene.name'),
-            center: record.get('scene.center'),
-            range: record.get('scene.range')
+            center: center,
+            range: range,
+            inSceneRange: tooClose(userLat, userLon, lat2, lon2, range)
         })
     })
 
@@ -96,24 +160,54 @@ async function get_scenes(req, res) {
 }
 
 async function join_scene (req, res) {
-    let userID = req.auth.payload.sub;
+    console.log(req.body);
 
-    await dbDriver.executeQuery(
-        "MATCH (user:USER {authID: $authID}) MATCH (scene:SCENE {name: $sceneName}) MERGE (user)-[:PART_OF]->(scene)",
-        {
-            authID: userID, 
-            sceneName: req.body.sceneName},
-        {database: 'neo4j'}
-    )
+    if(!req.body.sceneName) {
+        res.send(false)
+        return 
+    }
 
-    await preferredSceneChecking(userID, req.body.sceneName)
+    if(req.body.sceneName) {
+        let userID = req.auth.payload.sub;
 
-    res.send(true)
+        console.log('User: ' + userID + ' joining ' + req.body.sceneName)
+
+        await dbDriver.executeQuery(
+            "MATCH (user:USER {authID: $authID}) MATCH (scene:SCENE {name: $sceneName}) MERGE (user)-[:PART_OF]->(scene)",
+            {
+                authID: userID, 
+                sceneName: req.body.sceneName
+            },
+            {database: 'neo4j'}
+        )
+
+        await preferredSceneChecking(userID, req.body.sceneName)
+
+        res.send(true)
+                
+    }
+}
+
+// async function getDistance (req, res) {
+
+//     res.send({num: d})
+// }
+
+function tooClose(userLat, userLon, lat2, lon2, range) {
+    var R = 6372.0710; // Radius of the Earth in km
+    var rlat1 = userLat * (Math.PI/180); // Convert degrees to radians
+    var rlat2 = lat2 * (Math.PI/180); // Convert degrees to radians
+    var difflat = rlat2-rlat1; // Radian difference (latitudes)
+    var difflon = (lon2-userLon) * (Math.PI/180); // Radian difference (longitudes)
+
+    var d = 2 * R * Math.asin(Math.sqrt(Math.sin(difflat/2)*Math.sin(difflat/2)+Math.cos(rlat1)*Math.cos(rlat2)*Math.sin(difflon/2)*Math.sin(difflon/2)));
+
+    return d <= range;
 }
 
 module.exports = {
     create,
     get_locality,
     get_scenes,
-    join_scene
+    join_scene,
 }

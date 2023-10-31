@@ -1,5 +1,5 @@
 <template>
-    <div class="document-preview thin-border tw-m-4 tw-max-w-[15vw] tw-min-h-[10vw] tw-h-fit tw-p-4">
+    <div class="document-preview thin-border tw-m-4 tw-min-w-[200px] tw-w-full tw-min-h-[10vw] tw-h-fit tw-p-4">
         <div class="title tw-mb-2 tw-text-xl">{{ doc.title }}</div>
         <div class="first-page tw-whitespace-pre-line" >
             <span class="markdown" v-html="converter.render(doc.firstPage.slice(0, 100))"></span>

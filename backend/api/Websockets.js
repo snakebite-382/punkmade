@@ -133,7 +133,7 @@ async function getPosts(userID, scene, category, start, end) {
             OPTIONAL MATCH (:COMMENT)-[commentCount:COMMENTED_ON]->(post)
             OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
             OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
-            RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user), COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID, COUNT(commentCount) as commentCount
+            RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user) as user, COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID, COUNT(commentCount) as commentCount
             ORDER BY timestamp DESC
             SKIP toInteger($skip)
             LIMIT toInteger($limit)`,
@@ -146,12 +146,14 @@ async function getPosts(userID, scene, category, start, end) {
             },
             {database: 'neo4j'}
         )
-    
         let posts = []
         
         for(let post of postRecords) {
-            let authorNode = post.get("COLLECT(user)")
-            let author = authorNode[0].properties.name
+            let authorNode = post.get("user")
+            let author = {
+                name: authorNode[0].properties.name,
+                userID: authorNode[0].properties.authID
+            }
     
             posts.push(postNodeToPostObject(post, author))
         }

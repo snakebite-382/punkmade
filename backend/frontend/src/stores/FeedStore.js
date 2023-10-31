@@ -315,6 +315,11 @@ export const feedStore = defineStore("feed", {
 
         async createDocument(title, pages) {
             this.docPostProgress = async () => {
+                let doc = {
+                    sceneID: this.libraryScene,
+                    title,
+                    pages,
+                };
                 this.showProgress("Creating Document")
                 const request = await fetch('http://localhost:5000/api/feed/create_document/', {
                     method: "POST",
@@ -322,14 +327,14 @@ export const feedStore = defineStore("feed", {
                         'Content-Type': "application/json",
                         "Authorization": `Bearer ${this.token}`
                     },
-                    body: JSON.stringify({
-                        sceneID: this.libraryScene,
-                        title,
-                        pages,
-                    })
+                    body: JSON.stringify(doc)
                 })
 
                 let data = await request.json();
+
+                if(data) {
+                    this.libraryDocuments.push(data)
+                }
 
                 this.cleanToaster();
 

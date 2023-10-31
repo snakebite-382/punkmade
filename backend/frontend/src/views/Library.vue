@@ -4,9 +4,9 @@
             <StyledBtn @click="creating=!creating" class="tw-my-2">{{ creating ? 'Close' : "Create Document" }}</StyledBtn>
             <CreateDocument @submit-form="submit" v-show="creating"/>
 
-            <div class="tw-grid tw-grid-cols-6" v-show="!creating ">
+            <div class="tw-flex tw-justify-evenly tw-flex-wrap" v-show="!creating ">
                 <!-- previews -->
-                <router-link :to="`/library/document?docID=${doc.id}&doc=${encodeURIComponent(JSON.stringify(doc))}`" class="prev-containter" v-for="doc of feedStore.libraryDocuments" id="document.timestamp">
+                <router-link :to="`/library/document?docID=${doc.id}&doc=${encodeURIComponent(JSON.stringify(doc))}`" class="prev-containter tw-mx-4 tw-max-w-[750px]" v-for="doc of feedStore.libraryDocuments" id="document.timestamp">
                     <PreviewDocument :doc="{title: doc.title, firstPage: doc.pages[0], timestamp: doc.timestamp}"/>
                 </router-link>
             </div>

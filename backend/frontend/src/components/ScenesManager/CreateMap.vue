@@ -11,7 +11,7 @@
         > 
 
             <!-- CURSOR -->
-            <MapCircle :center="selectedPos" :radius="range*scale" fill="#0526ff" accent="#000000" @circle-clicked="handleClick" v-if="locationStore.mode === 'create'"/>
+            <MapCircle :center="selectedPos" :radius="range*scale" fill="#0526ff" accent="#000000" @circle-clicked="handleClick" v-if="locationStore.mode === 'create' && !locationStore.sceneIn.color"/>
 
             <MapCircle v-for="scene in locationStore.scenes" :center="{lat: scene.center[0], lng: scene.center[1]}" :key="scene._id" :radius="scene.range*scale" :fill="scene.color" :accent="scene.accent" @circle-clicked="() => {sceneClick(scene)}"/>
         </GMapMap>
