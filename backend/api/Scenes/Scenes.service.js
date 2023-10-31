@@ -188,11 +188,6 @@ async function join_scene (req, res) {
     }
 }
 
-// async function getDistance (req, res) {
-
-//     res.send({num: d})
-// }
-
 function tooClose(userLat, userLon, lat2, lon2, range) {
     var R = 6372.0710; // Radius of the Earth in km
     var rlat1 = userLat * (Math.PI/180); // Convert degrees to radians
