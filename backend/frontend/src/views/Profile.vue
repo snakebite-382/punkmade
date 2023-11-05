@@ -1,13 +1,17 @@
 <template>
     <div id="Profile" class="tw-flex tw-flex-col tw-items-center tw-mt-4">
         <div class="card-info thin-border tw-p-4 tw-w-[50vw]">
-            <h1 class="tw-text-2xl underline tw-text-center">{{ user.name }}</h1>
+            <h1 class="tw-text-2xl underline tw-text-center">{{ user.name }} <vue-feather @click="showEdit=!showEdit" class="tw-text-xl tw-pl-2" type="edit-2"/></h1>
             <p class="pronouns tw-text-lg tw-text-center"><p v-for="(pronoun, i) of pronouns">{{ pronoun + (i < pronouns.length-1 ? "/": ' ') }}</p></p>
             <Seperator class="tw-h-1 tw-mt-3 tw-mb-2"/>
             <span class="bio tw-text-lg">
                 <strong v-for="chunk of splitBio.first"><i>{{ chunk + " " }}</i></strong><i v-for="chunk of splitBio.rest">{{ chunk + " " }}</i>
             </span>
+
+            <EditDetails v-show="showEdit" :check-all="false" @success="changed" class="tw-w-full tw-mx-2 tw-my-8"/>
+
             <MyScenes class="tw-w-full"/>
+            
         </div>
     </div>
 </template>
@@ -16,6 +20,7 @@
 import { API_ROUTE } from '../../api';
 import Seperator from '../components/Reusable/Seperator.vue';
 import MyScenes from '../components/ScenesManager/MyScenes.vue';
+import EditDetails from '../components/User/EditDetails.vue';
 
 export default {
     name: 'Profile',
@@ -31,13 +36,15 @@ export default {
             },
             pronouns: [],
             isLoading: true,
+            showEdit: false,
         }
     },
 
     components: {
-    Seperator,
-    MyScenes
-},
+        Seperator,
+        MyScenes,
+        EditDetails
+    },
 
     async created() {
         if(typeof this.rawUser.sub === 'string') {
@@ -58,22 +65,43 @@ export default {
         const data = await request.json();
 
         this.user = data;
+        this.splitter()
+    },
 
-        let chunks  = this.user.bio.split(' ')
+    methods: {
+        changed(details) {
+            console.log(details.pronouns.length, details.bio.length)
+            this.user.name = details.nickname.length > 0 ? details.nickname : this.user.name
+            this.user.pronouns = details.pronouns.length > 0 ? details.pronouns : this.user.pronouns
+            this.user.bio = details.bio.length > 0 ? details.bio : this.user.bio
 
-        for(let i = 0; i < chunks.length; i++) {
-            if(i < 5) {
-                this.splitBio.first.push(chunks[i])
-            } else {
-                this.splitBio.rest.push(chunks[i])
+            this.splitter()
+        },
+
+        splitter() {
+            this.splitBio = {
+                first: [],
+                rest: []
             }
-        }
 
-        chunks = this.user.pronouns.split(' ')
+            this.pronouns = []
 
-        for(let i = 0; i < 3; i++) {
-            if(chunks[i]) {
-                this.pronouns.push(chunks[i])
+            let chunks  = this.user.bio.split(' ')
+
+            for(let i = 0; i < chunks.length; i++) {
+                if(i < 5) {
+                    this.splitBio.first.push(chunks[i])
+                } else {
+                    this.splitBio.rest.push(chunks[i])
+                }
+            }
+
+            chunks = this.user.pronouns.split(' ')
+
+            for(let i = 0; i < 3; i++) {
+                if(chunks[i]) {
+                    this.pronouns.push(chunks[i])
+                }
             }
         }
     }

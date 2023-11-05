@@ -1,6 +1,7 @@
 <template>
     <div class="edit tw-h-full">
         <form @submit="submit" class="tw-flex tw-flex-col tw-w-fit">
+            <StyledInput type="text" placeholder="Username..." v-model="nickname" class="tw-mb-2 tw-w-full"/>
             <textarea 
                     name="bio" 
                     maxlength="150"
@@ -28,6 +29,7 @@ export default {
         return {
             bio: '',
             pronouns: '',
+            nickname: ''
         }
     },
 
@@ -43,11 +45,12 @@ export default {
             let details = {
                 bio: this.bio,
                 pronouns: this.pronouns,
+                nickname: this.nickname,
                 ...this.additional
             }
 
             for(let key of Object.keys(details)) {
-                if((key != 'bio' && key != 'pronouns') || this.checkAll)
+                if((key != 'bio' && key != 'pronouns' && key != 'nickname') || this.checkAll)
                 if(details[key].length === 0) {
                     alert(`${key} cannot be empty!`)
                 }
@@ -69,7 +72,7 @@ export default {
             const data = await request.json();
 
             if(data) {
-                this.$emit('success')
+                this.$emit('success', details)
             }
         },
     },
