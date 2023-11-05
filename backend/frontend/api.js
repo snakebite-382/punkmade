@@ -1,0 +1,1 @@
+export const API_ROUTE = process.env.NODE_ENV === 'production' ? "https://punkmade.fly.dev/api/" : 'http://localhost:5000/api/'

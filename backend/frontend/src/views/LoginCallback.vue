@@ -15,7 +15,7 @@ export default {
     async created() {
         let token = await this.$auth0.getAccessTokenSilently();
         console.log(this.user.sub)
-        let result = await fetch(`http://localhost:5000/api/users/loggedin/`, {
+        let result = await fetch(`${API_ROUTE}users/loggedin/`, {
             headers: {
                     "Authorization": `Bearer ${token}`
                 }

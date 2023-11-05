@@ -14,6 +14,7 @@
 import { locationStore } from '../../stores/LocationStore';
 import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
+import { API_ROUTE } from '../../../api';
 
 export default {
     name: "MyScenes",
@@ -35,7 +36,7 @@ export default {
             if(sure) {
                 const token = await this.$auth0.getAccessTokenSilently();
 
-                let request = await fetch('http://localhost:5000/api/users/leave_scene', {
+                let request = await fetch(API_ROUTE + 'users/leave_scene', {
                     method: 'POST',
                     headers: {
                         'Content-Type': "application/json",
@@ -60,7 +61,7 @@ export default {
         async clickPrefer(scene) {
             const token = await this.$auth0.getAccessTokenSilently();
 
-            let request = await fetch('http://localhost:5000/api/users/prefer_scene', {
+            let request = await fetch(API_ROUTE + 'users/prefer_scene', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -83,7 +84,7 @@ export default {
     async created() {
         const token = await this.$auth0.getAccessTokenSilently();
 
-        let request = await fetch('http://localhost:5000/api/scenes/get_my_scenes', {
+        let request = await fetch(API_ROUTE + 'scenes/get_my_scenes', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }

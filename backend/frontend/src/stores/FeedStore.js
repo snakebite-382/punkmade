@@ -1,7 +1,8 @@
 import { defineStore } from "pinia"
 import { socket } from '@/socket';
+import {API_ROUTE} from '../../api'
 
-const API_URL = "http://localhost:5000/api/feed";
+const API_URL = API_ROUTE + "feed";
 const TICK_RATE = 375;
 const logPre = "Feed Data Store: ";
 
@@ -82,7 +83,7 @@ export const feedStore = defineStore("feed", {
         async fetchInit() {
             log('Fetching initial data')
             this.showProgress('Loading Feed');
-            const userInfo = await fetch("http://localhost:5000/api/users/userinfo", {
+            const userInfo = await fetch(API_ROUTE + "users/userinfo", {
                 headers: {
                     "Authorization": `Bearer ${this.token}`
                 }
@@ -325,7 +326,7 @@ export const feedStore = defineStore("feed", {
                     pages,
                 };
                 this.showProgress("Creating Document")
-                const request = await fetch('http://localhost:5000/api/feed/create_document/', {
+                const request = await fetch(API_ROUTE + 'feed/create_document/', {
                     method: "POST",
                     headers: {
                         'Content-Type': "application/json",

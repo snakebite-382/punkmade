@@ -23,6 +23,8 @@ import MapCircle from './MapCircle.vue';
 import {locationStore} from '../../stores/LocationStore';
 import {mapStores} from 'pinia';
 
+import { API_ROUTE } from '../../../api';
+
 export default {
     name: "CreateMap",
 
@@ -69,7 +71,7 @@ export default {
             
             if(!inCache) { // if it isn't cached
                 // get the locality
-                const response = await fetch(`http://localhost:5000/api/scenes/get_locality/${pos.join(",")}`, {
+                const response = await fetch(`${API_ROUTE}scenes/get_locality/${pos.join(",")}`, {
                     headers: {
                         "Authorization": `Bearer ${token}`
                     }

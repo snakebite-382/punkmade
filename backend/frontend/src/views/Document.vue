@@ -20,6 +20,7 @@ import FullscreenLoading from '../components/Loading/Fullscreen.vue';
 import Seperator from '../components/Reusable/Seperator.vue';
 import StyledBtn from '../components/Reusable/StyledBtn.vue';
 import { converter } from '../../markdown';
+import { API_ROUTE } from '../../api';
 
 export default {
     name: "Document",
@@ -42,7 +43,7 @@ export default {
 
     async created() {
         if(!this.doc.loaded) {
-            const request = await fetch(`http://localhost:5000/api/feed/get_document/${this.docID}`)
+            const request = await fetch(`${API_ROUTE}feed/get_document/${this.docID}`)
 
             const data = await request.json();
 

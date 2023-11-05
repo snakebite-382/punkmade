@@ -19,6 +19,7 @@
 <script>
 import StyledInput from '../Reusable/StyledInput.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
+import { API_ROUTE } from '../../../api';
 
 export default {
     name: "EditDetails",
@@ -56,7 +57,7 @@ export default {
 
             let token = await this.$auth0.getAccessTokenSilently();
 
-            const request = await fetch('http://localhost:5000/api/users/update_info/', {
+            const request = await fetch(API_ROUTE + 'users/update_info/', {
                 method: "POST",
                 headers: {
                     'Content-Type': "application/json",

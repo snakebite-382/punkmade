@@ -13,6 +13,7 @@
 </template>
 
 <script>
+import { API_ROUTE } from '../../api';
 import Seperator from '../components/Reusable/Seperator.vue';
 import MyScenes from '../components/ScenesManager/MyScenes.vue';
 
@@ -47,7 +48,7 @@ export default {
 
         const token = await this.$auth0.getAccessTokenSilently()
 
-        const request = await fetch(`http://localhost:5000/api/users/get_profile/${this.userID}`, {
+        const request = await fetch(`${API_ROUTE}users/get_profile/${this.userID}`, {
                 headers: {
                     'Content-Type': "application/json",
                     "Authorization": `Bearer ${token}`

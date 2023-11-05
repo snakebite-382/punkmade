@@ -25,5 +25,8 @@
     "backend": "nodemon server.js",
     "frontend": "cd frontend && npm run dev",
     "start": "npm i && cd frontend && npm i && npm run build && cd ../ && npm run backend"
+  },
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.4.10"
   }
 }

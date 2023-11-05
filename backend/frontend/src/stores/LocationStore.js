@@ -1,8 +1,9 @@
 import { defineStore }from 'pinia'
 import {randColor} from "../helper"
+import {API_ROUTE} from '../../api'
 
 const logPre = "Location Cache Store: ";
-const API = "http://localhost:5000/api/scenes"
+const API = API_ROUTE + "scenes"
 
 export const locationStore = defineStore('location', {
     state: () => {

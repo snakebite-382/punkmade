@@ -27,6 +27,7 @@ import { locationStore } from '../../stores/LocationStore';
 import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
 import MyScenes from './MyScenes.vue';
+import { API_ROUTE } from '../../../api';
 
 export default {
     name: "CreateScene",
@@ -81,7 +82,7 @@ export default {
 
             if(this.locationStore.mode === 'create') {
                  // send the create scene request
-                response = await fetch('http://localhost:5000/api/scenes/create/', {
+                response = await fetch(API_ROUTE + 'scenes/create/', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -101,7 +102,7 @@ export default {
                 }
             } else if(this.locationStore.mode === 'join'){
                 console.log(this.locationStore.selectedScene.name)
-                response = await fetch('http://localhost:5000/api/scenes/join', {
+                response = await fetch(API_ROUTE + 'scenes/join', {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
