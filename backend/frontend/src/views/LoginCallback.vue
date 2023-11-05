@@ -4,6 +4,7 @@
 
 <script>
 import { navRoutes } from '../router';
+import { API_ROUTE } from '../../api';
 
 export default {
     name: 'login-callback',

@@ -61,7 +61,9 @@ async function createPost(req, res) {
     let userID = req.auth.payload.sub
     let supportedTypes = ['text'];
 
-    if(formData.type in supportedTypes && formData.content.length <= 500 && typeof formData.content === 'string') {
+    console.log(req.body)
+
+    if(supportedTypes.indexOf(formData.type) !== -1 && formData.content.length <= 500 && typeof formData.content === 'string') {
         const {records : postRecords} = await dbDriver.executeQuery(
             `MATCH (user:USER {authID: $authID})-[:PART_OF]->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]->(category:CATEGORY {name: $categoryName})
             CREATE (user)-[:POSTED]->(post:POST {content: $content, type: $type, timestamp: $timestamp})-[:POSTED_ON]->(category)
@@ -76,11 +78,14 @@ async function createPost(req, res) {
             },
             {database: 'neo4j'}
         )
+
+        console.log(postRecords)
     
         let newPost = postRecords[0].get('postID').toNumber()
     
         res.send({ID: newPost}) // send the new post
     } else {
+        console.log('POSTING FAILED')
         res.send(false)
     }
 }

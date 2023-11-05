@@ -41,6 +41,10 @@ async function fetchReverseGeocode(lat, lng) {
 async function create(req, res) {
     const formData = req.body;
 
+    formData.range = parseInt(formData.range);
+    formData.center[0] = parseFloat(formData.center[0])
+    formData.center[1] = parseFloat(formData.center[1])
+
     if(formData.range > 30) {
         formData.range = 30;
     } else if(formData.range < 10) {
@@ -49,12 +53,12 @@ async function create(req, res) {
 
     let invalid = false;
 
-    if(center[0] === NaN || typeof center[0] != 'number') {
+    if(formData.center[0] === NaN) {
         res.send(false)
         return
     }
 
-    if(center[1] === NaN || typeof center[1] != 'number') {
+    if(formData.center[1] === NaN) {
         res.send(false)
         return
     }
@@ -108,11 +112,16 @@ async function create(req, res) {
 async function get_locality(req, res) {
     let latLng = req.params.latlng.split(",")
 
-    if(latLng[0] === NaN || typeof latLng[0] != 'number') {
+    console.log(latLng)
+
+    latLng[0] = parseFloat(latLng[0])
+    latLng[1] = parseFloat(latLng[1])
+
+    if(latLng[0] === NaN) {
         res.send(false)
         return
     }
-    if(latLng[1] === NaN || typeof latLng[1] != 'number') {
+    if(latLng[1] === NaN) {
         res.send(false)
         return
     }

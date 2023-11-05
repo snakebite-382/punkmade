@@ -24,7 +24,8 @@
     "dev": "concurrently 'npm run backend' 'npm run frontend'",
     "backend": "nodemon server.js",
     "frontend": "cd frontend && npm run dev",
-    "start": "npm i && cd frontend && npm i && npm run build && cd ../ && npm run backend"
+    "start": "node server.js",
+    "deploy": "cd frontend && npm run build && cd ../ && fly deploy"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.4.10"

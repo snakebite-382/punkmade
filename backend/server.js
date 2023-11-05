@@ -51,7 +51,7 @@ APIRouter.use('/users', UsersRouter)
 app.use(express.static(frontendDir));
 
 // redirect all requests to the frontend that aren't api reqs or static files
-app.get('/', (request, response) => {
+app.get('*', (request, response) => {
     response.sendFile(frontendDir + "/index.html");
 });
 
