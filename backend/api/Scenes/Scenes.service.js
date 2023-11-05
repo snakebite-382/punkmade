@@ -129,11 +129,14 @@ async function get_scenes(req, res) {
         return 
     }
 
-    console.log(userLat, userLon)
-
     const {records} = await dbDriver.executeQuery(
-        'MATCH (scene:SCENE) RETURN scene.name, scene.center, scene.range',
-        {},
+        `MATCH (scene:SCENE)
+        OPTIONAL MATCH (user:USER {authID: $authID})-[:PART_OF]-(scene)
+        OPTIONAL MATCH (user)-[pref:PREFERRED_SCENE]-(scene)
+        RETURN scene.name, scene.center, scene.range, COUNT(user) AS partOf, COUNT(pref) as prefers`,
+        {
+            authID: req.auth.payload.sub
+        },
         {database: 'neo4j'}
     )
 
@@ -152,7 +155,9 @@ async function get_scenes(req, res) {
             name: record.get('scene.name'),
             center: center,
             range: range,
-            inSceneRange: tooClose(userLat, userLon, lat2, lon2, range)
+            inSceneRange: tooClose(userLat, userLon, lat2, lon2, range),
+            inScene: record.get('partOf').toNumber() > 0,
+            preferred: record.get('prefers').toNumber() > 0,
         })
     })
 
@@ -160,8 +165,6 @@ async function get_scenes(req, res) {
 }
 
 async function join_scene (req, res) {
-    console.log(req.body);
-
     if(!req.body.sceneName) {
         res.send(false)
         return 
@@ -200,9 +203,35 @@ function tooClose(userLat, userLon, lat2, lon2, range) {
     return d <= range;
 }
 
+async function getMyScenes(req, res) {
+    const userID = req.auth.payload.sub;
+
+    const {records: sceneRecords} = await dbDriver.executeQuery(
+        `MATCH (scene:SCENE)<-[:PART_OF]-(user:USER {authID: $authID})
+        OPTIONAL MATCH (scene)<-[pref:PREFERRED_SCENE]-(user)
+        RETURN scene.name as name, COUNT(pref) as prefers
+        `,
+        {
+            authID: userID,
+        },
+        {database: 'neo4j'}
+    );
+
+    let scenes = [];
+
+    for(let scene of sceneRecords) {
+        scenes.push({
+            name: scene.get('name'),
+            preferred: scene.get('prefers').toNumber() > 0,
+        })
+    }
+    res.send(scenes);
+}
+
 module.exports = {
     create,
     get_locality,
     get_scenes,
     join_scene,
+    getMyScenes,
 }

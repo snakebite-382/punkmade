@@ -73,10 +73,6 @@ export const feedStore = defineStore("feed", {
             log("Token set")
         },
 
-        setStatus(status) {
-            this.status = status
-        },
-
         async initSocket() {
             socket.connect()
 
@@ -220,6 +216,14 @@ export const feedStore = defineStore("feed", {
                 log('fetching docs')
                 if(!gradual) {
                     let results = await socket.emitWithAck('get documents', this.libraryScene, start, end)
+
+                    if(!results) {
+                        return;
+                    }
+
+                    if(results.length === 0) {
+                        return;
+                    }
 
                     this.libraryDocuments = results;
                 }

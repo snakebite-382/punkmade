@@ -26,8 +26,6 @@ async function loggedin(req, res) {
             { database: 'neo4j' }
         )
 
-        console.log(records[0])
-
         await auth0Manager.updateAppMetadata({id: userID}, auth0User.app_metadata)
     }
 
@@ -141,9 +139,121 @@ async function getProfile(req, res) {
     }))
 }
 
+async function leaveScene(req, res) {
+    let userID = req.auth.payload.sub;
+
+    const {records: sceneRecords} = await dbDriver.executeQuery(
+        `MATCH (scene:SCENE {name: $sceneName})<-[in:PART_OF]-(user:USER {authID: $authID})
+        OPTIONAL MATCH (media:POST | DOCUMENT)<-[:POSTED]-(user)
+        OPTIONAL MATCH (comment:COMMENT)-[:COMMENTED_ON | REPLIED_TO *]->(media)
+        OPTIONAL MATCH (page:PAGE)<-[:HAS_PAGE]-(media)
+        OPTIONAL MATCH (user)-[prefer:PREFERRED_SCENE]->(scene)
+        DETACH DELETE in, prefer, media, comment, page
+        `,
+        {
+            authID: userID,
+            sceneName: req.body.scene
+        },
+        {database: 'neo4j'}
+    )
+
+    res.send(await fallBackPrefered(userID))
+}
+
+async function preferScene(req, res) {
+    const userID = req.auth.payload.sub
+
+    await dbDriver.executeQuery(
+        `MATCH (scene:SCENE)<-[:PART_OF]-(user:USER {authID: $authID})
+        OPTIONAL MATCH (prefScene:SCENE)<-[pref:PREFERRED_SCENE]-(user)
+        DELETE pref
+        `,
+        {
+            authID: userID,
+            sceneName: req.body.scene
+        },
+        {database: 'neo4j'}
+    )
+
+    await dbDriver.executeQuery(
+        `MATCH (user:USER {authID: $authID})
+        MATCH (selectedScene:SCENE {name: $sceneName})
+        CREATE (selectedScene)<-[:PREFERRED_SCENE]-(user)`,
+        {
+            authID: userID,
+            sceneName: req.body.scene
+        },
+        {database: 'neo4j'}
+    )
+
+    const {records: sceneRecords} = await dbDriver.executeQuery(
+        `MATCH (scene:SCENE)<-[:PART_OF]-(user:USER {authID: $authID})
+        OPTIONAL MATCH (scene)<-[pref:PREFERRED_SCENE]-(user)
+        RETURN COUNT(pref) as prefers, scene.name as name
+        `,
+        {
+            authID: userID,
+            sceneName: req.body.scene
+        },
+        {database: 'neo4j'}
+    )
+
+    let scenes = [];
+
+    for(let scene of sceneRecords) {
+        scenes.push({
+            name: scene.get('name'),
+            preferred: scene.get('prefers').toNumber() > 0
+        })
+    }
+
+    res.send(scenes)
+}
+
+async function fallBackPrefered(userID) {
+    const {records: sceneRecords} = await dbDriver.executeQuery(
+        `MATCH (scene:SCENE)<-[:PART_OF]-(:USER {authID: $authID})
+        return scene.name as name
+        `,
+        {
+            authID: userID
+        },
+        {database: 'neo4j'}
+    )
+
+    let scenes = [];
+
+    for(let i = 0; i < sceneRecords.length; i++) {
+        let preferred = false;
+
+        if(i === 0) {
+            await dbDriver.executeQuery(
+                `MATCH (scene:SCENE {name: $name})<-[:PART_OF]-(user:USER {authID: $authID})
+                MERGE (scene)<-[:PREFERRED_SCENE]-(user)
+                `,
+                {
+                    name: sceneRecords[i].get('name'),
+                    authID: userID
+                },
+                {database: 'neo4j'}
+            )
+            preferred = true
+        }
+
+        scenes.push({
+            name: sceneRecords[i].get('name'),
+            preferred,
+        })
+    }
+
+    return scenes;
+}
+
 module.exports = {
     loggedin,
     userinfo,
     updateInfo,
     getProfile,
+    leaveScene,
+    preferScene
 }

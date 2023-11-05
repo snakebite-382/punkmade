@@ -7,12 +7,14 @@
             <span class="bio tw-text-lg">
                 <strong v-for="chunk of splitBio.first"><i>{{ chunk + " " }}</i></strong><i v-for="chunk of splitBio.rest">{{ chunk + " " }}</i>
             </span>
+            <MyScenes class="tw-w-full"/>
         </div>
     </div>
 </template>
 
 <script>
 import Seperator from '../components/Reusable/Seperator.vue';
+import MyScenes from '../components/ScenesManager/MyScenes.vue';
 
 export default {
     name: 'Profile',
@@ -32,8 +34,9 @@ export default {
     },
 
     components: {
-        Seperator
-    },
+    Seperator,
+    MyScenes
+},
 
     async created() {
         if(typeof this.rawUser.sub === 'string') {

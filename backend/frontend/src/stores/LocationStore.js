@@ -12,7 +12,8 @@ export const locationStore = defineStore('location', {
             scenes: [],
             selectedScene: {},
             mode: 'create',
-            sceneIn: {}
+            sceneIn: {},
+            myScenes: [],
         }
     },
 
@@ -50,6 +51,7 @@ export const locationStore = defineStore('location', {
         },
 
         async getScenes(tokenfn, userCoords) {
+            this.myScenes = []
             console.log(userCoords.lng)
             console.log(logPre + "Fetching Scenes")
             let token = await tokenfn();
@@ -63,12 +65,21 @@ export const locationStore = defineStore('location', {
             let data = await response.json();
 
             this.scenes = data;
+            let spokenFor = false; // will only be true if theres a scene theyre within the range of that they're not in to make sure those scenes get precedence over one they're near but in
+
             this.scenes.forEach(scene => {
                 scene.color = randColor();
                 scene.accent = randColor();
-                if(scene.inSceneRange) {
-                    this.selectedScene = scene;
-                    this.mode = 'join'
+                if(scene.inSceneRange && !spokenFor) {
+                    this.setScene(scene)
+
+                    if(!scene.inScene) {
+                        spokenFor = true;
+                    }
+                }
+
+                if(scene.inScene)  {
+                    this.myScenes.push(scene)
                 }
             });
             // add caching
@@ -76,8 +87,13 @@ export const locationStore = defineStore('location', {
 
         setScene(scene) {
             console.log(logPre + "Selected: " + scene.name);
-            this.selectedScene = scene;
-            this.mode = 'join';
+            if(scene.inScene) {
+                this.selectedScene = scene;
+                this.mode = 'none'
+            } else {
+                this.selectedScene = scene;
+                this.mode = 'join';
+            }
         },
 
         unselect() {
