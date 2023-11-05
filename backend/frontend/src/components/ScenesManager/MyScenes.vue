@@ -47,10 +47,12 @@ export default {
                 })
 
                 const data = await request.json()
-                this.scenes = data
-                this.$emit('interacted')
-                if(this.feedStore.initialized) {
-                    await this.feedStore.fetchInit()
+                if(data) {
+                    this.scenes = data
+                    this.$emit('interacted')
+                    if(this.feedStore.initialized) {
+                        await this.feedStore.fetchInit()
+                    }
                 }
             }
         },

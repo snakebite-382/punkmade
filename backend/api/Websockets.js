@@ -10,8 +10,6 @@ async function WebsocketServer(io) {
 }
 
 function HandleConnection(socket) {
-    console.log(`connected socket of ID ${socket.id}`);
-
     socket.on('auth', async (token, callback) => {
         const { payload: result } = await jose.jwtVerify(token, JWKS, {
             issuer: `https://punkmade.us.auth0.com/`,
@@ -57,7 +55,6 @@ function HandleConnection(socket) {
 }
 
 async function HandleDisconnect() {
-    console.log(`socket disconnected`)
 }
 
 async function getDocuments(scene, start, end) {

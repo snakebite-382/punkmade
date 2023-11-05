@@ -1,7 +1,7 @@
 <template>
     <div id="Create">
         <form :onsubmit="submitEvent" class="tw-mx-auto tw-w-fit tw-flex tw-flex-col tw-items-center tw-mt-4">
-            <StyledInput type="text" v-model="title" name="title" class="tw-text-center tw-text-xl tw-mb-2 tw-w-full" />
+            <StyledInput type="text" v-model="title" name="title" class="tw-text-center tw-text-xl tw-mb-2 tw-w-full" maxlength="100"/>
             <div class="editor tw-flex">
                 <textarea 
                     @input="input"

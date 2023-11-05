@@ -1,5 +1,6 @@
 const axios = require('axios');
 const auth0Manager = require('../managementAPI.js');
+const {checkSceneExists} = require('../Scenes/Scenes.service.js');
 const {dbDriver} = require('../db.js')
 
 async function loggedin(req, res) {
@@ -67,24 +68,26 @@ async function updateInfo (req, res){
 
     let userRecords;
 
-    if(formData.nickname) {
-        let {records} = await dbDriver.executeQuery(
-            `MATCH (user:USER {authID: $authID})
-            SET user.name = $nickname
-            `,
-            {
-                authID: userID,
-                nickname: formData.nickname
-            },
-            {
-                database: 'neo4j'
-            }
-        )
-
-        userRecords = records;
+    if(formData.nickname && typeof formData.nickname === 'string' && formData.nickname.length < 150) {
+        if(await usernameAvailable(formData.nickname)) {
+            let {records} = await dbDriver.executeQuery(
+                `MATCH (user:USER {authID: $authID})
+                SET user.name = $nickname
+                `,
+                {
+                    authID: userID,
+                    nickname: formData.nickname
+                },
+                {
+                    database: 'neo4j'
+                }
+            )
+    
+            userRecords = records;
+        }
     }
 
-    if(formData.bio) {
+    if(formData.bio && typeof formData.bio === 'string' && formData.bio.length < 150) {
         let {records} = await dbDriver.executeQuery(
             `MATCH (user:USER {authID: $authID})
             SET user.bio = $bio
@@ -101,7 +104,7 @@ async function updateInfo (req, res){
         userRecords = records;
     }
 
-    if(formData.pronouns) {
+    if(formData.pronouns && typeof formData.pronouns === 'string' && formData.pronouns.length < 50) {
         let {records} = await dbDriver.executeQuery(
             `MATCH (user:USER {authID: $authID})
             SET user.pronouns = $pronouns
@@ -141,50 +144,59 @@ async function getProfile(req, res) {
 
 async function leaveScene(req, res) {
     let userID = req.auth.payload.sub;
+    let exists = await checkSceneExists(req.body.scene, userID);
 
-    const {records: sceneRecords} = await dbDriver.executeQuery(
-        `MATCH (scene:SCENE {name: $sceneName})<-[in:PART_OF]-(user:USER {authID: $authID})
-        OPTIONAL MATCH (media:POST | DOCUMENT)<-[:POSTED]-(user)
-        OPTIONAL MATCH (comment:COMMENT)-[:COMMENTED_ON | REPLIED_TO *]->(media)
-        OPTIONAL MATCH (page:PAGE)<-[:HAS_PAGE]-(media)
-        OPTIONAL MATCH (user)-[prefer:PREFERRED_SCENE]->(scene)
-        DETACH DELETE in, prefer, media, comment, page
-        `,
-        {
-            authID: userID,
-            sceneName: req.body.scene
-        },
-        {database: 'neo4j'}
-    )
-
-    res.send(await fallBackPrefered(userID))
+    if(exists) {
+        await dbDriver.executeQuery(
+            `MATCH (scene:SCENE {name: $sceneName})<-[in:PART_OF]-(user:USER {authID: $authID})
+            OPTIONAL MATCH (media:POST | DOCUMENT)<-[:POSTED]-(user)
+            OPTIONAL MATCH (comment:COMMENT)-[:COMMENTED_ON | REPLIED_TO *]->(media)
+            OPTIONAL MATCH (page:PAGE)<-[:HAS_PAGE]-(media)
+            OPTIONAL MATCH (user)-[prefer:PREFERRED_SCENE]->(scene)
+            DETACH DELETE in, prefer, media, comment, page
+            `,
+            {
+                authID: userID,
+                sceneName: req.body.scene
+            },
+            {database: 'neo4j'}
+        )
+    
+        res.send(await fallBackPrefered(userID))
+    } else {
+        res.send(false)
+    }
 }
 
 async function preferScene(req, res) {
     const userID = req.auth.payload.sub
+    const exists = await checkSceneExists(req.body.scene, userID)
 
-    await dbDriver.executeQuery(
-        `MATCH (scene:SCENE)<-[:PART_OF]-(user:USER {authID: $authID})
-        OPTIONAL MATCH (prefScene:SCENE)<-[pref:PREFERRED_SCENE]-(user)
-        DELETE pref
-        `,
-        {
-            authID: userID,
-            sceneName: req.body.scene
-        },
-        {database: 'neo4j'}
-    )
-
-    await dbDriver.executeQuery(
-        `MATCH (user:USER {authID: $authID})
-        MATCH (selectedScene:SCENE {name: $sceneName})
-        CREATE (selectedScene)<-[:PREFERRED_SCENE]-(user)`,
-        {
-            authID: userID,
-            sceneName: req.body.scene
-        },
-        {database: 'neo4j'}
-    )
+    if(exists) {
+        await dbDriver.executeQuery(
+            `MATCH (scene:SCENE)<-[:PART_OF]-(user:USER {authID: $authID})
+            OPTIONAL MATCH (prefScene:SCENE)<-[pref:PREFERRED_SCENE]-(user)
+            DELETE pref
+            `,
+            {
+                authID: userID,
+                sceneName: req.body.scene
+            },
+            {database: 'neo4j'}
+        )
+    
+        await dbDriver.executeQuery(
+            `MATCH (user:USER {authID: $authID})
+            MATCH (selectedScene:SCENE {name: $sceneName})
+            CREATE (selectedScene)<-[:PREFERRED_SCENE]-(user)`,
+            {
+                authID: userID,
+                sceneName: req.body.scene
+            },
+            {database: 'neo4j'}
+        )
+    
+    }
 
     const {records: sceneRecords} = await dbDriver.executeQuery(
         `MATCH (scene:SCENE)<-[:PART_OF]-(user:USER {authID: $authID})
@@ -247,6 +259,20 @@ async function fallBackPrefered(userID) {
     }
 
     return scenes;
+}
+
+async function usernameAvailable(name) {
+    const {records: availableRecords} = await dbDriver.executeQuery(
+        `MATCH (user:USER {name: $username})
+        RETURN user
+        `,
+        {
+            username: name
+        },
+        {database: 'neo4j'}
+    )
+
+    return availableRecords.length === 0;
 }
 
 module.exports = {

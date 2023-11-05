@@ -24,6 +24,7 @@ import FullscreenLoading from '../Loading/Fullscreen.vue';
 import StyledInput from '../Reusable/StyledInput.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
 import { locationStore } from '../../stores/LocationStore';
+import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
 import MyScenes from './MyScenes.vue';
 
@@ -39,7 +40,7 @@ export default {
 },
 
     computed: {
-        ...mapStores(locationStore)
+        ...mapStores(locationStore, feedStore)
     },
 
     data() {
@@ -123,7 +124,10 @@ export default {
 
             if(data) { // if we got back data, it worked!
                 alert(`${this.locationStore.mode === 'create' ? 'created': 'joined'}`)
-                this.getScenes()
+                await this.getScenes()
+                if(this.feedStore.initialized) {
+                    await this.feedStore.fetchInit();
+                }
             }
         },
 

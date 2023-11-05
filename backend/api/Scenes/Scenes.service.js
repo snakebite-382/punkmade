@@ -228,10 +228,28 @@ async function getMyScenes(req, res) {
     res.send(scenes);
 }
 
+async function checkSceneExists(name, authID = false) {
+    let authCheck = authID ? `<-[:PART_OF]-(:USER {authID: $authID})` : ''
+
+    const {records: existsRecords} = await dbDriver.executeQuery(
+        `MATCH (scene:SCENE {name: $sceneName})${authCheck}
+        RETURN scene
+        `,
+        {
+            sceneName: name,
+            authID: authID
+        },
+        {database: 'neo4j'}
+    )
+
+    return existsRecords.length > 0;
+}
+
 module.exports = {
     create,
     get_locality,
     get_scenes,
     join_scene,
     getMyScenes,
+    checkSceneExists,
 }

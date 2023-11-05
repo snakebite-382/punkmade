@@ -9,7 +9,7 @@
                      class="tw-bg-grey thin-border tw-leading-tight tw-w-[250px] tw-h-[150px] tw-resize-none tw-outline-none tw-text-md tw-p-1"
             ></textarea>
             <span class="tw-mb-2">{{ bio.length }}/150</span>
-            <StyledInput type="text" name="pronouns" placeholder="Pronouns..." v-model="pronouns"/>
+            <StyledInput type="text" name="pronouns" placeholder="Pronouns..." v-model="pronouns" maxlength="50"/>
 
             <StyledBtn type="submit" class="tw-mt-2">Update</StyledBtn>
         </form>
