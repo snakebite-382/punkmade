@@ -23,8 +23,8 @@ const io = new Server(server, {
 // prod:
 // const frontendDir = __dirname + "/frontend/dist";
 //test:
-const frontendDir = __dirname + '/frontend/public'
-const port = process.env.port || 5000;
+const frontendDir = __dirname + '/frontend/dist'
+const port = process.env.PORT || 5000;
 
 // security
 const clientOrigins = ["http://localhost:5173", "http://localhost:5000/"];
