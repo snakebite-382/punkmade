@@ -5,6 +5,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const { createServer } = require('node:http');
 const { Server } = require('socket.io')
+const RateLimit = require('express-rate-limit');
 
 // DOTENV
 dotEnv.config({path: __dirname + "/.env"})
@@ -18,6 +19,15 @@ const io = new Server(server, {
       methods: ["GET", "POST"],
     }
 });
+
+//Security
+let limiter = RateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 100, // max 100 requests per windowMs (100 req/10min, 10 req/min, ~0.16 req/sec)
+});
+
+// apply rate limiter to all requests
+app.use(limiter);
 
 // runtime constants 
 // prod:
