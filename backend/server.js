@@ -6,10 +6,10 @@ const bodyParser = require("body-parser");
 const { createServer } = require('node:http');
 const { Server } = require('socket.io')
 const RateLimit = require('express-rate-limit');
-const helmet = require('helmet')
+const helmet = require('helmet');
 
 // DOTENV
-dotEnv.config({path: __dirname + "/.env"})
+dotEnv.config({path: __dirname + "/.env"});
 
 // Setup the express app
 const app = express();
@@ -31,7 +31,7 @@ let limiter = RateLimit({
 app.use(limiter);
 
 // use helmet to set some recommended security headers
-let NogginProtector = helmet()
+let NogginProtector = helmet();
 
 app.use(NogginProtector);
 
@@ -39,7 +39,7 @@ app.use(NogginProtector);
 // prod:
 // const frontendDir = __dirname + "/frontend/dist";
 //test:
-const frontendDir = __dirname + '/frontend/dist'
+const frontendDir = __dirname + '/frontend/dist';
 const port = 5000;
 
 // security
@@ -54,14 +54,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const APIRouter = express.Router();
 app.use("/api", APIRouter);
 
-const ScenesRouter = require("./api/Scenes/Scenes.router.js")
-APIRouter.use("/scenes", ScenesRouter)
+const ScenesRouter = require("./api/Scenes/Scenes.router.js");
+APIRouter.use("/scenes", ScenesRouter);
 
 const FeedRouter = require("./api/Feed/Feed.router.js");
 APIRouter.use("/feed", FeedRouter);
 
 const UsersRouter = require('./api/Users/Users.router.js');
-APIRouter.use('/users', UsersRouter)
+APIRouter.use('/users', UsersRouter);
 
 // static files
 app.use(express.static(frontendDir));
@@ -72,16 +72,16 @@ app.get('*', (request, response) => {
 });
 
 // Socket.io
-const {WebsocketServer} = require('./api/Websockets')
+const {WebsocketServer} = require('./api/Websockets');
 
 WebsocketServer(io);
 
 process.on("exit", () => { // close mongo on close
-    console.log("CLOSING")
+    console.log("CLOSING");
     const { dbDriver } = require("./api/db.js");
     dbDriver.close();
-    console.log("CLOSED")
-})
+    console.log("CLOSED");
+});
 
 // listen for requests :)
 server.listen(port, () => {
