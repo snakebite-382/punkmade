@@ -34,8 +34,8 @@ app.use(limiter);
 let NogginProtector = helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ['self', 'https://punkmade.us.auth0.com'],
-      scriptSrc: ['self']
+      defaultSrc: ["'self'", 'https://punkmade.us.auth0.com'],
+      imgSrc: ["*"]
     }
   }
 });
