@@ -1,8 +1,13 @@
 <template>
 <div id="toaster">
-    <div id="inner" :class="`${toasterStore.status != null ? `show tw-bg-${toasterStore.status.toLowerCase()} tw-text-grey`: 'hide'}`">
+    <div id="inner" :class="`tw-text-grey ${toasterStore.show ? `show tw-bg-${toasterStore.status.toLowerCase()}`: toasterStore.status ? `hide tw-bg-${toasterStore.status.toLowerCase()}` : 'hide'}`">
         <strong>{{ toasterStore.text }}</strong>
     </div>
+
+    <!-- ANNOYING ASS FIX -->
+    <div class="tw-bg-success"></div>
+    <div class="tw-bg-working"></div>
+    <div class="tw-bg-error"></div>
 </div>
 </template>
 
@@ -30,8 +35,8 @@ export default {
 }
 #inner {
     padding: 15px;
-    border: 5px solid;
     margin: auto;
+    transition: opacity 1s ease;
 }
 
 .hide {
