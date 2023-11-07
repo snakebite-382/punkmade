@@ -9,6 +9,7 @@
                 <StyledBtn @click="prev"><vue-feather type="chevron-right" class="tw-rotate-180 tw-p-0.5 tw-mr-1"/></StyledBtn>
                 <StyledBtn v-for="(x, index) of doc.pages" @click="currentIndex = index" class="tw-text-xl tw-w-full tw-mx-1">{{ index }}</StyledBtn>
                 <StyledBtn @click="next"><vue-feather type="chevron-right" class="tw-p-0.5 tw-ml-1"/></StyledBtn>
+                <ReportButton :mediaID="parseInt(docID)" :scene="doc.scene" :iconSize="36" class="tw-ml-2"/>
             </div>
         </div>
         <FullscreenLoading v-show="isLoading"/>
@@ -21,6 +22,7 @@ import Seperator from '../components/Reusable/Seperator.vue';
 import StyledBtn from '../components/Reusable/StyledBtn.vue';
 import { converter } from '../../markdown';
 import { API_ROUTE } from '../../api';
+import ReportButton from '../components/Feed/ReportButton.vue';
 
 export default {
     name: "Document",
@@ -36,10 +38,11 @@ export default {
     },
 
     components: {
-        FullscreenLoading,
-        Seperator,
-        StyledBtn,
-    },
+    FullscreenLoading,
+    Seperator,
+    StyledBtn,
+    ReportButton
+},
 
     async created() {
         if(!this.doc.loaded) {

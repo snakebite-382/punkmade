@@ -9,6 +9,8 @@
             {{ comment.likes }} <LikeButton @post-liked="feedStore.likeComment(expectedParents)" :size='18' :fill="comment.liked ? 'red' : 'none'" outline="black"/>
         </span>
         
+        <ReportButton class="tw-mx-2" :mediaID="comment.commentID" :scene="feedStore.currentScene"/>
+        
         <div :class="'replies ' + (depth > maxReplyDepth ? 'flattened' : 'unflattened') " v-if="comment.replies.length > 0 && showReplies">
             <Comment v-for="reply in comment.replies" :comment="reply" :key="reply.commentID" :depth="depth + 1" :parents="expectedParents.slice(1)" :postID="postID"/>
         </div>
@@ -23,6 +25,7 @@ import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
 import LikeButton from './LikeButton.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
+import ReportButton from './ReportButton.vue';
 
 export default {
     name: "Comment",
@@ -44,10 +47,11 @@ export default {
     },
 
     components: {
-        LikeButton,
-        Comment,
-        StyledBtn
-    },  
+    LikeButton,
+    Comment,
+    StyledBtn,
+    ReportButton
+},  
 
     methods: {
         isReplying() {

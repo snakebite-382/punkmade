@@ -61,7 +61,6 @@ async function createPost(req, res) {
     let userID = req.auth.payload.sub
     let supportedTypes = ['text'];
 
-    console.log(req.body)
 
     if(supportedTypes.indexOf(formData.type) !== -1 && formData.content.length <= 500 && typeof formData.content === 'string') {
         const {records : postRecords} = await dbDriver.executeQuery(
@@ -78,8 +77,6 @@ async function createPost(req, res) {
             },
             {database: 'neo4j'}
         )
-
-        console.log(postRecords)
     
         let newPost = postRecords[0].get('postID').toNumber()
     
@@ -235,7 +232,6 @@ async function createDocument(req, res) {
 
         if(typeof page === 'string' && page.length <= 1500) {
             if(page.length > 0) {
-                console.log(page)
                 let {records: pageRecords} = await dbDriver.executeQuery(
                     `MATCH (document:DOCUMENT {title: $title})
                     CREATE (document)-[:HAS_PAGE]->(:PAGE {content: $content, index: $index})
@@ -256,9 +252,9 @@ async function createDocument(req, res) {
 
 async function getDocument(req, res) {
     const {records: documentRecords} = await dbDriver.executeQuery(
-        `MATCH (document:DOCUMENT)-[:HAS_PAGE]->(page:PAGE)
+        `MATCH (scene:SCENE)-[:HAS_DOCUMENT]->(document:DOCUMENT)-[:HAS_PAGE]->(page:PAGE)
         WHERE ID(document) = toInteger($docID)
-        RETURN document.title as title, document.timestamp as timestamp, COLLECT(page) as pages
+        RETURN document.title as title, document.timestamp as timestamp, COLLECT(page) as pages, scene.name as scene
         `,
         {
             docID: req.params.docID,
@@ -276,8 +272,154 @@ async function getDocument(req, res) {
         title: documentRecords[0].get('title'),
         timestamp: documentRecords[0].get('timestamp'),
         pages,
+        scene: documentRecords[0].get('scene'),
         loaded: true
     }))
+}
+
+async function reportMedia(req, res) {
+    const formData = req.body
+    const userID = req.auth.payload.sub;
+
+    const {records: alreadyReportedRecords} = await dbDriver.executeQuery(
+        `MATCH (user:USER {authID: $authID})-[:PART_OF]->(:SCENE {name: $scene})-[:HAS_CATEGORY | POSTED_ON | HAS_DOCUMENT | COMMENTED_ON | REPLIED_TO *]
+        -(media:POST | COMMENT | DOCUMENT)<-[report:REPORTED]-(:USER) 
+        OPTIONAL MATCH (user)-[repByUser:REPORTED]->(media)
+        RETURN COUNT(report) as reported, COUNT(repByUser) as repByUser
+        `,
+        {
+            mediaID: formData.mediaID,
+            scene: formData.scene,
+            authID: userID,
+        },
+        {database: 'neo4j'}
+    );
+
+    const alreadyReported = alreadyReportedRecords[0].get('reported').toNumber() > 0;
+    const reportedByUser = alreadyReportedRecords[0].get('repByUser').toNumber() > 0;
+
+    if(alreadyReported && !reportedByUser) {
+        voteToRemove(req, res);
+        return
+    }
+
+    await dbDriver.executeQuery(
+        `MATCH (user:USER {authID: $authID})-[:PART_OF]->
+        (:SCENE {name: $sceneName})-[:HAS_CATEGORY | POSTED_ON | HAS_DOCUMENT | COMMENTED_ON | REPLIED_TO *]-
+        (media:POST | COMMENT | DOCUMENT)
+        WHERE ID(media) = $mediaID
+        MERGE (user)-[report:REPORTED]->(media)
+        RETURN report.votes as votes, ID(report) as reportID
+        `,
+        {
+            mediaID: formData.mediaID,
+            sceneName: formData.scene,
+            authID: userID,
+        },
+        {database: 'neo4j'}
+    )
+
+    await checkAndRemoveReportedMedia(formData.mediaID, formData.scene)
+
+    res.send(true)
+}
+
+async function voteToRemove(req, res) {
+    const formData = req.body;
+    const userID = req.auth.payload.sub;
+
+    const {records: repByUserRecords} = await dbDriver.executeQuery(
+        `MATCH (:USER {authID: $authID})-[repByUser:REPORTED | VOTED_TO_REMOVE]->(media:POST | COMMENT | DOCUMENT)
+        WHERE ID(media) = $mediaID
+        RETURN repByUser`,
+        {
+            mediaID: formData.mediaID, 
+            authID: userID
+        },
+        {database: 'neo4j'}
+    )
+
+    if(repByUserRecords.length > 0) {
+        return 
+    }
+
+    const {records: voteRecords} = await dbDriver.executeQuery(
+        `MATCH (user:USER {authID: $authID})-[:PART_OF]->(:SCENE {name: $scene})-[:HAS_CATEGORY | POSTED_ON | HAS_DOCUMENT | COMMENTED_ON | REPLIED_TO *]
+        -(media:POST | COMMENT | DOCUMENT)<-[:REPORTED]-(:USER)
+        WHERE ID(media) = $mediaID
+        MERGE (user)-[report:VOTED_TO_REMOVE]->(media)
+        RETURN COUNT(report) as success
+        `,
+        {
+            scene: formData.scene,
+            mediaID: formData.mediaID, 
+            authID: userID
+        },
+        {database: 'neo4j'}
+    );
+
+    res.send(voteRecords[0].get('success').toNumber() > 0);
+
+    checkAndRemoveReportedMedia(formData.mediaID, formData.scene)
+}
+
+async function checkAndRemoveReportedMedia(mediaID, sceneName) {
+    const {records: totalUserRecords} = await dbDriver.executeQuery(
+        `MATCH (user:USER)-[:PART_OF]->(:SCENE {name: $sceneName})
+        RETURN COUNT(user) as users
+        `,
+        {
+            sceneName
+        },
+        {database: 'neo4j'}
+    );
+
+    let totalUsers = totalUserRecords[0].get('users').toNumber();
+
+    const {records: votesForRemovalRecords} = await dbDriver.executeQuery(
+        `MATCH (:USER)-[vote:REPORTED | VOTED_TO_REMOVE]->(media:POST | COMMENT | DOCUMENT)-[:HAS_CATEGORY | POSTED_ON | HAS_DOCUMENT | COMMENTED_ON | REPLIED_TO *]-(:SCENE {name: $sceneName})
+        WHERE ID(media) = $mediaID
+        RETURN COUNT(vote) as votes
+        `,
+        {
+            mediaID,
+            sceneName
+        },
+        {database: 'neo4j'}
+    );
+
+    let votes = votesForRemovalRecords[0].get('votes').toNumber()
+
+    let percentVote = (votes/totalUsers) * 100;
+
+    if(percentVote >= 66) {
+        await dbDriver.executeQuery(
+            `MATCH (media:POST | COMMENT | DOCUMENT)-[*]-(:SCENE {name: $sceneName})
+            OPTIONAL MATCH (media)-[:COMMENTED_ON | HAS_PAGE | REPLIED_TO *]-(children)
+            WHERE ID(media) = $mediaID
+            DETACH DELETE media, children
+            `,
+            {
+                mediaID,
+                sceneName
+            },
+            {database: 'neo4j'}
+        )
+    }
+}
+
+async function userInScene(authID, sceneName) {
+    const {records: existsRecords} = await dbDriver.executeQuery(
+        `MATCH (user:USER {authID: $authID})-[:PART_OF]->(:SCENE {name: $sceneName})
+        `,
+        {
+            authID,
+            sceneName,
+        },
+        {database: 'neo4j'}
+    )
+
+    return existsRecords.length > 0
 }
 
 module.exports = {
@@ -288,4 +430,7 @@ module.exports = {
     createComment,
     createDocument,
     getDocument,
+    reportMedia,
+    voteToRemove,
+    checkAndRemoveReportedMedia,
 }

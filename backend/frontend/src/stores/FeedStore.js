@@ -205,6 +205,22 @@ export const feedStore = defineStore("feed", {
             return target
         },
 
+        removePost(postID) {
+            let cat = this.getCategory(this.currentCategory)
+
+            cat.posts.splice(this.getPostById(postID).index, 1)
+        },
+
+        async fetchReports(scene, start, end) {
+            if(this.socketAuthed) {
+                const results = await socket.emitWithAck('get reports', scene, start, end)
+
+                if(!results) return this.throwError("Couldn't load reports")
+
+                return results
+            }
+        },
+
         async fetchDocuments(batchsize, gradual=false) {
             if(!this.socketAuthed) {
                 await this.initSocket();

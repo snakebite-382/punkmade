@@ -31,9 +31,19 @@ let limiter = RateLimit({
 app.use(limiter);
 
 // use helmet to set some recommended security headers
-let NogginProtector = helmet();
+let NogginProtector = helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ['self', 'https://punkmade.us.auth0.com'],
+      scriptSrc: ['self']
+    }
+  }
+});
 
 app.use(NogginProtector);
+
+const clientOrigins = ["http://localhost:5173", "http://localhost:5000/", "https://punkmade.fly.dev/"];
+app.use(cors({ origin: clientOrigins }));
 
 // runtime constants 
 // prod:
@@ -42,13 +52,14 @@ app.use(NogginProtector);
 const frontendDir = __dirname + '/frontend/dist';
 const port = 5000;
 
-// security
-const clientOrigins = ["http://localhost:5173", "http://localhost:5000/", "https://punkmade.fly.dev/"];
-app.use(cors({ origin: clientOrigins }));
-
 // form parsing
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Cron Jobs
+const {initJobs} = require('./cronManager.js')
+
+initJobs()
 
 // API
 const APIRouter = express.Router();

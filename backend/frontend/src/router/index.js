@@ -7,6 +7,7 @@ import Library from '../views/Library.vue';
 import Document from '../views/Document.vue'
 import Onboard from '../views/Onboard.vue';
 import Profile from '../views/Profile.vue';
+import Report from '../views/Reports.vue';
 
 export const routes = [
   {
@@ -48,6 +49,12 @@ export const routes = [
     name: "Profile",
     component: Profile,
     beforeEnter: authGuard,
+  },
+  {
+    path: '/reports',
+    name: "Reports",
+    component: Report,
+    beforeEnter: authGuard
   }
 ]
 

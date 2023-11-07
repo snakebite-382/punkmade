@@ -23,7 +23,7 @@ function HandleConnection(socket) {
         } else {
             callback(false)
         }
-    })
+    });
 
     socket.on('get posts', async (scene, category, start, end, callback) => {
         if(socket.data_authenticated) {
@@ -32,7 +32,7 @@ function HandleConnection(socket) {
         } else {
             callback(false)
         }
-    })
+    });
 
     socket.on('get comments', async(scene, category, targetID, start, end, callback) => {
         if(socket.data_authenticated) {
@@ -41,7 +41,7 @@ function HandleConnection(socket) {
         } else {
             callback(false);
         }
-    })
+    });
 
     socket.on('get documents', async(scene, start, end, callback) => {
         if(socket.data_authenticated) {
@@ -49,15 +49,25 @@ function HandleConnection(socket) {
 
             callback(documents)
         }
+    });
+
+    socket.on('get reports', async(scene, start, end, callback) => {
+        if(!socket.data_authenticated) {
+            return 
+        }
+
+        let reports = await getReports(scene, start, end, socket.data_userID)
+
+        callback(reports)
     })
 
-    socket.on('disconnect', HandleDisconnect)
+    socket.on('disconnect', HandleDisconnect);
 }
 
 async function HandleDisconnect() {
 }
 
-async function getDocuments(scene, start, end) {
+async function getDocuments(scene, start, end, authID) {
     start = parseInt(start);
     end = parseInt(end)
     const {records: documentRecords} = await dbDriver.executeQuery(
@@ -95,6 +105,66 @@ async function getDocuments(scene, start, end) {
     return documents;
 }
 
+async function getReports(scene, start, end, authID) {
+    const {records: reportRecords} = await dbDriver.executeQuery(
+        `MATCH (:SCENE {name: $scene})-[:HAS_CATEGORY | POSTED_ON | HAS_DOCUMENT | COMMENTED_ON | REPLIED_TO *]
+        -(media:POST | COMMENT | DOCUMENT)<-[report:REPORTED]-(reporter:USER)
+        MATCH (reportee:USER)-[:POSTED | COMMENTED]-(media)
+        MATCH (:USER)-[vote:REPORTED | VOTED_TO_REMOVE]-(media)
+        RETURN media.content as content, reporter.name as reporter, reportee.name as reportee, COUNT(vote) as votes, ID(media) as mediaID, media.title as title, media.timestamp as timestamp
+        SKIP toInteger($skip)
+        LIMIT toInteger($limit)
+        `,
+        {
+            authID, 
+            scene,
+            skip: start,
+            limit: end - start
+        },
+        {database: 'neo4j'}
+    )
+
+    let reports = []
+
+    for(let report of reportRecords) {
+        const mediaID = report.get('mediaID').toNumber()
+        const content = report.get('content')
+        let docDetails = {};
+    
+        if(report.get('content') === null) {
+            docDetails.title = report.get('title')
+            docDetails.timestamp = report.get('timestamp')
+            docDetails.pages = []
+
+            const {records: pageRecords} = await dbDriver.executeQuery(
+                `MATCH (doc:DOCUMENT)-[:HAS_PAGE]->(page:PAGE)
+                WHERE ID(doc) = $mediaID
+                RETURN page.index as index, page.content as content
+                `,
+                {
+                    mediaID,
+                },
+                {}
+            )
+
+            for(let page of pageRecords) {
+                docDetails.pages[parseInt(page.get('index'))] = page.get('content')
+            }
+        }
+
+        reports.push({
+            content: content,
+            docDetails,
+            reporter: report.get('reporter'),
+            reportee: report.get('reportee'),
+            votes: report.get('votes').toNumber(),
+            mediaID,
+        })
+    }
+
+    return reports
+}
+
 function postNodeToPostObject(post, author) {
     let id = post.get('postID').toNumber();
 
@@ -123,10 +193,13 @@ function postNodeToPostObject(post, author) {
 async function getPosts(userID, scene, category, start, end) {
     if(dbDriver) {
         const {records: postRecords} = await dbDriver.executeQuery(
-            `MATCH (user:USER {authID: $authID})-[:PART_OF]
+            `OPTIONAL MATCH (originUser:USER {authID: $authID})-[:REPORTED | VOTED_TO_REMOVE]-(reported:POST)
+            WITH COLLECT(reported) as reported
+            MATCH (originUser)-[:PART_OF]
             ->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]
             ->(:CATEGORY {name: $categoryName})<-[:POSTED_ON]
-            -(post:POST) 
+            -(post:POST)<-[:POSTED]-(user:USER)
+            WHERE NOT(post IN reported)
             OPTIONAL MATCH (:COMMENT)-[commentCount:COMMENTED_ON]->(post)
             OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
             OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)

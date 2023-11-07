@@ -148,10 +148,11 @@ async function leaveScene(req, res) {
 
     if(exists) {
         await dbDriver.executeQuery(
-            `MATCH (scene:SCENE {name: $sceneName})<-[in:PART_OF]-(user:USER {authID: $authID})
-            OPTIONAL MATCH (media:POST | DOCUMENT)<-[:POSTED]-(user)
-            OPTIONAL MATCH (comment:COMMENT)-[:COMMENTED_ON | REPLIED_TO *]->(media)
-            OPTIONAL MATCH (page:PAGE)<-[:HAS_PAGE]-(media)
+            `MATCH (scene:SCENE {name: "Boston Punk"})<-[in:PART_OF]-(user:USER {authID: "auth0|6523112d5d31d49758643fef"})
+            OPTIONAL MATCH (scene)-[:HAS_CATEGORY]->(:CATEGORY)<-[:POSTED_ON *]-(media:POST | DOCUMENT)<-[:POSTED]-(user)
+            OPTIONAL MATCH (scene)-[:HAS_DOCUMENT]->(doc:DOCUMENT)<-[:POSTED]-(user)
+            OPTIONAL MATCH (user)-[:COMMENTED]->(comment:COMMENT)-[:COMMENTED_ON | REPLIED_TO *]->(media)
+            OPTIONAL MATCH (page:PAGE)<-[:HAS_PAGE]-(doc)
             OPTIONAL MATCH (user)-[prefer:PREFERRED_SCENE]->(scene)
             DETACH DELETE in, prefer, media, comment, page
             `,

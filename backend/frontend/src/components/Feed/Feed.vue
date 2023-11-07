@@ -4,7 +4,8 @@
             <Nav :class="`sidebar tw-flex-col tw-col-start-1 tw-justify-start tw-border-red tw-border-solid tw-border-4 tw-h-fit tw-p-4 tw-text-xl tw-row-start-1 tw-z-10 tw-w-fit ${showCreatePost ? 'tw-h-full' : ''}`">
                 <SceneNav :scenes="returnNavScenes()" @nav-item-click="sceneNavClick" id="Scene-Nav"/>
                 <CategoryNav :categories="returnNavCategories()" @nav-item-click="categoriesNavClick" id="Category-Nav"/>
-                <span><router-link :to="`/library?scene=${encodeURIComponent(feedStore.currentScene)}`">Library</router-link></span>
+                <router-link :to="`/library?scene=${encodeURIComponent(feedStore.currentScene)}`">Library</router-link>
+                <router-link :to="`/reports?scene=${encodeURIComponent(feedStore.currentScene)}`">Reports</router-link>
                 <div class="creation tw-text-lg tw-mt-2">
                     <StyledBtn @click="toggleCreatePost" class="tw-m">{{ showCreatePost ? "close" : "post something" }}</StyledBtn> 
                     <CreatePost v-show="showCreatePost" class="tw-mt-2"/>

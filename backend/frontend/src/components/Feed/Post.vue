@@ -14,9 +14,10 @@
         <div v-if="!post.posting">
             <h4 class="interactions">
                 {{ post.likes }} <LikeButton :fill="post.liked ? 'red' : 'none'" @post-liked="$emit('post-liked')"/> 
-                <span v-if="post.comments" class="tw-ml-2">
+                <span v-if="post.comments" class="tw-mx-2">
                     {{ Math.max(post.comments.length, post.commentCount) }} <CommentButton fill="none" @toggle-comments="toggleComments"/> 
                 </span>
+                <ReportButton :mediaID="post.postID" :scene="feedStore.currentScene" @reported="feedStore.removePost(post.postID)"/>
             </h4>
             <CommentSection v-if="commentsOpen" :comments="post.comments" :postID="post.postID.toString()"/> 
         </div>
@@ -29,6 +30,7 @@ import LikeButton from './LikeButton.vue';
 import CommentButton from './CommentButton.vue';
 import CommentSection from './CommentSection.vue';
 import Seperator from '../Reusable/Seperator.vue';
+import ReportButton from './ReportButton.vue';
 
 import { converter } from '../../../markdown';
 
@@ -57,7 +59,8 @@ export default {
         LikeButton,
         CommentButton,
         CommentSection,
-        Seperator
+        Seperator,
+        ReportButton
     },
 
     methods: {
