@@ -6,6 +6,8 @@
 
 <script>
 import { API_ROUTE } from '../../../api';
+import {toaster} from '../../stores/Toaster'
+import {mapStores} from 'pinia'
 
 export default {
     name: 'ReportButton',
@@ -16,8 +18,14 @@ export default {
         iconSize: Number
     },
 
+    computed: {
+        ...mapStores(toaster)
+    },
+
     methods: {
         async report() {
+            this.toasterStore.work('Reporting')
+
             const token = await this.$auth0.getAccessTokenSilently();
             const response = await fetch(`${API_ROUTE}feed/report_media/`, {
                 method: "POST",
@@ -36,6 +44,8 @@ export default {
             if(data) {
                 this.$emit("reported")
             }
+
+            this.toasterStore.cleanToaster()
         }
     }
 }

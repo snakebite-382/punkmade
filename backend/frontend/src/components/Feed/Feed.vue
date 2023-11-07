@@ -1,7 +1,7 @@
 <template>
     <div id="Feed" class="">
         <div v-show="!isLoading" v-if="feedStore.initialized" :class="`${showCreatePost ? '' : 'tw-grid grid'} tw-min-h-full`">
-            <Nav :class="`sidebar tw-flex-col tw-col-start-1 tw-justify-start tw-border-red tw-border-solid tw-border-4 tw-h-fit tw-p-4 tw-text-xl tw-row-start-1 tw-z-10 tw-w-fit ${showCreatePost ? 'tw-h-full' : ''}`">
+            <Nav :class="`sidebar tw-flex-col tw-col-start-1 tw-justify-start tw-border-red tw-border-solid tw-border-4 tw-h-fit tw-p-4 tw-text-xl tw-row-start-1 tw-z-10 tw-w-fit ${showCreatePost ? 'tw-h-full tw-w-full' : ''}`">
                 <SceneNav :scenes="returnNavScenes()" @nav-item-click="sceneNavClick" id="Scene-Nav"/>
                 <CategoryNav :categories="returnNavCategories()" @nav-item-click="categoriesNavClick" id="Category-Nav"/>
                 <router-link :to="`/library?scene=${encodeURIComponent(feedStore.currentScene)}`">Library</router-link>
@@ -15,7 +15,6 @@
             <div class="center tw-col-start-1 tw-col-span-2 tw-row-start-1 tw-flex tw-flex-col tw-items-center" v-show="!showCreatePost">
                 <Posts/>
             </div>
-            <StatusToaster/>
         </div>
         <div v-show="isLoading">
             <FullscreenLoading/>
@@ -30,7 +29,6 @@ import FullscreenLoading from '../Loading/Fullscreen.vue';
 import CreatePost from './CreatePost.vue';
 import CategoryNav from './CategoryNav.vue';
 import SceneNav from './SceneNav.vue';
-import StatusToaster from './StatusToaster.vue'
 import StyledBtn from '../Reusable/StyledBtn.vue';
 import Nav from '../Nav.vue';
 
@@ -38,6 +36,7 @@ import '../../assets/markdown.scss'
 
 // store stuff
 import { feedStore } from '../../stores/FeedStore';
+import {toaster} from '../../stores/Toaster'
 import { mapStores } from 'pinia';
 
 // helper fns
@@ -60,16 +59,17 @@ export default {
         CreatePost,
         CategoryNav,
         SceneNav,
-        StatusToaster,
         StyledBtn,
         Nav,
     },
 
     computed: {
-        ...mapStores(feedStore)
+        ...mapStores(feedStore, toaster)
     }, 
 
     async created() { 
+        this.toasterStore.work("Loading")
+
         // set the token
         await this.feedStore.setToken(this.$auth0.getAccessTokenSilently);
 
@@ -82,6 +82,8 @@ export default {
             this.feedStore.initialized = true;
         }
         this.isLoading = false; // stop loading once everything is fetched
+
+        this.toasterStore.cleanToaster()
     },
 
     methods: {

@@ -22,6 +22,9 @@ import StyledInput from '../Reusable/StyledInput.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
 import { API_ROUTE } from '../../../api';
 
+import {toaster} from '../../stores/Toaster';
+import {mapStores} from 'pinia'
+
 export default {
     name: "EditDetails",
 
@@ -33,6 +36,10 @@ export default {
         }
     },
 
+    computed: {
+        ...mapStores(toaster)
+    },
+
     props: {
         additional: Object,
         checkAll: Boolean
@@ -42,6 +49,8 @@ export default {
         async submit(e) {
             e.preventDefault();
 
+            this.toasterStore.work("Updating")
+
             let details = {
                 bio: this.bio,
                 pronouns: this.pronouns,
@@ -50,13 +59,11 @@ export default {
             }
 
             for(let key of Object.keys(details)) {
-                if((key != 'bio' && key != 'pronouns' && key != 'nickname') || this.checkAll)
+                if((key != 'bio' && key != 'pronouns' && key != 'nickname') || this.checkAll);
                 if(details[key].length === 0) {
-                    alert(`${key} cannot be empty!`)
+                    alert(`${key} cannot be empty!`);
                 }
             }
-
-            console.log("FETCHING")
 
             let token = await this.$auth0.getAccessTokenSilently();
 
@@ -72,8 +79,10 @@ export default {
             const data = await request.json();
 
             if(data) {
-                this.$emit('success', details)
+                this.$emit('success', details);
             }
+
+            this.toasterStore.cleanToaster()
         },
     },
     components: { StyledInput, StyledBtn }

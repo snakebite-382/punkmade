@@ -1,5 +1,5 @@
 <template>
-    <form @submit="onSubmit">
+    <form @submit="onSubmit" class="tw-w-full">
         <textarea 
             type="text" placeholder="post something..." name="content" id="content-input" v-model="content" autocomplete="off" 
             class="tw-bg-grey tw-p-1 thin-border tw-leading-tight tw-w-full tw-h-[50vh] tw-resize-y"
@@ -15,6 +15,7 @@
 
 <script>
 import { feedStore } from '../../stores/FeedStore';
+import { toaster } from '../../stores/Toaster'
 import { mapStores } from 'pinia';
 import StyledInput from '../Reusable/StyledInput.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
@@ -55,12 +56,14 @@ export default {
     },
 
     computed: {
-        ...mapStores(feedStore)
+        ...mapStores(feedStore, toaster)
     },
 
     methods: {
         async onSubmit(e) {
             e.preventDefault();
+
+            this.toasterStore.work("Posting")
 
             // create the newpost
             let newPost = {
@@ -72,6 +75,8 @@ export default {
 
             // send that to the backend via the store which will destructure and send it
             await this.feedStore.createPost(newPost);
+
+            this.toasterStore.cleanToaster()
         },
     }
 }

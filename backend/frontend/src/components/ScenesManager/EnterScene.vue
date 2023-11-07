@@ -25,6 +25,7 @@ import StyledInput from '../Reusable/StyledInput.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
 import { locationStore } from '../../stores/LocationStore';
 import { feedStore } from '../../stores/FeedStore';
+import {toaster} from '../../stores/Toaster'
 import { mapStores } from 'pinia';
 import MyScenes from './MyScenes.vue';
 import { API_ROUTE } from '../../../api';
@@ -41,7 +42,7 @@ export default {
 },
 
     computed: {
-        ...mapStores(locationStore, feedStore)
+        ...mapStores(locationStore, feedStore, toaster)
     },
 
     data() {
@@ -55,6 +56,7 @@ export default {
 
     async created() {
         navigator.geolocation.getCurrentPosition(async position=> { // get the users location and save it
+            this.toasterStore.work("Getting Scenes")
             this.userLocation = {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
@@ -65,7 +67,7 @@ export default {
             await this.getScenes();
 
             this.isLoading = false;
-        
+            this.toasterStore.cleanToaster()
         }, e => {
             console.error(e)
         });
@@ -74,13 +76,14 @@ export default {
     methods: {
         async handleSubmit(e) {
             e.preventDefault();
-
+            
             const token = await this.$auth0.getAccessTokenSilently()
 
             let response;
             let data;
 
             if(this.locationStore.mode === 'create') {
+                this.toasterStore.work("Creating")
                  // send the create scene request
                 response = await fetch(API_ROUTE + 'scenes/create/', {
                     method: "POST",
@@ -101,6 +104,7 @@ export default {
                     this.locationStore.myScenes.pop()
                 }
             } else if(this.locationStore.mode === 'join'){
+                this.toasterStore.work("Joining")
                 console.log(this.locationStore.selectedScene.name)
                 response = await fetch(API_ROUTE + 'scenes/join', {
                     method: "POST",
@@ -130,6 +134,8 @@ export default {
                     await this.feedStore.fetchInit();
                 }
             }
+
+            this.toasterStore.cleanToaster()
         },
 
         handleUpdate(update) {

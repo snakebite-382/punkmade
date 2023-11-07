@@ -14,6 +14,7 @@
 
 <script>
 import { feedStore } from '../stores/FeedStore';
+import { toaster } from '../stores/Toaster';
 import { mapStores } from 'pinia';
 import { converter } from '../../markdown'
 import {API_ROUTE} from '../../api'
@@ -37,10 +38,12 @@ export default {
 },
 
     computed: {
-        ...mapStores(feedStore)
+        ...mapStores(feedStore, toaster)
     },
 
     async created() {
+        this.toasterStore.work("Loading")
+
         const tokenFn = this.$auth0.getAccessTokenSilently;
 
         if(!this.feedStore.socketAuthed) {
@@ -49,11 +52,12 @@ export default {
         }
 
         this.reports = await this.feedStore.fetchReports(this.scene, this.reports.length, this.reports.length + 100);
+        this.toasterStore.cleanToaster()
     },
 
     methods: {
         async voteToRemove(id, i) {
-            console.log('reporting')
+            this.toasterStore.work("Voting")
 
             const token = await this.$auth0.getAccessTokenSilently();
             const request = await fetch(`${API_ROUTE}feed/vote_to_remove/`, {
@@ -73,6 +77,8 @@ export default {
             if(data) {
                 this.reports[i].votes++;
             }
+
+            this.toasterStore.cleanToaster()
         },
     }
 }

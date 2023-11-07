@@ -10,8 +10,6 @@
                     <PreviewDocument :doc="{...doc, firstPage: doc.pages[0]}"/>
                 </div>
             </div>
-
-            <StatusToaster/>
         </div>
 
         <div class="loading" v-show="isLoading">
@@ -23,11 +21,11 @@
 <script>
 import CreateDocument from '../components/Library/CreateDocument.vue';
 import FullscreenLoading from '../components/Loading/Fullscreen.vue';
-import StatusToaster from '../components/Feed/StatusToaster.vue';
 import StyledBtn from '../components/Reusable/StyledBtn.vue';
 import PreviewDocument from '../components/Library/PreviewDocument.vue';
 
 import {feedStore} from '../stores/FeedStore';
+import {toaster} from '../stores/Toaster'
 import { mapStores } from 'pinia';
 
 export default {
@@ -36,14 +34,13 @@ export default {
     components: {
     CreateDocument,
     FullscreenLoading,
-    StatusToaster,
     StyledBtn,
     PreviewDocument,
 
 },
 
     computed: {
-        ...mapStores(feedStore)
+        ...mapStores(feedStore, toaster)
     },
 
     data() {
@@ -55,17 +52,22 @@ export default {
     },
 
     async created() {
+        this.toasterStore.work("Loading Documents")
         await this.feedStore.setToken(this.$auth0.getAccessTokenSilently);
         this.feedStore.libraryScene = this.scene;
 
-        this.feedStore.fetchDocuments(100);
+        await this.feedStore.fetchDocuments(100);
 
         this.isLoading = false;
+
+        this.toasterStore.cleanToaster()
     },
 
     methods: {
         async submit(doc) {
+            this.toasterStore.work("Creating Document")
             await this.feedStore.createDocument(doc.title, doc.pages)
+            this.toasterStore.cleanToaster()
         }
     }
 }

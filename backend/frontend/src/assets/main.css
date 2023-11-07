@@ -7,6 +7,7 @@
 
 * {
     font-family: "Texturina" !important;
+    outline: none !important;
 }
 
 i.vue-feather {

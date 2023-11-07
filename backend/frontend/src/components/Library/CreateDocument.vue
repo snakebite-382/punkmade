@@ -64,7 +64,6 @@ export default {
         },
 
         async submit(e) {
-            console.log("submit")
             e.preventDefault();
             // if the last page is empty
             if(this.pages[this.pages.length-1].length === 0) {

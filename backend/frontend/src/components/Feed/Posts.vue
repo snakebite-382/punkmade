@@ -9,6 +9,7 @@
 
 <script>
 import { feedStore } from '../../stores/FeedStore';
+import {toaster} from '../../stores/Toaster'
 import { mapStores } from 'pinia';
 import Post from './Post.vue';
 
@@ -20,12 +21,14 @@ export default {
     },
 
     computed: {
-        ...mapStores(feedStore)
+        ...mapStores(feedStore, toaster)
     },
 
     methods: {
         async likePost(postIndex) {
+            this.toasterStore.work('Liking')
             await this.feedStore.likePost(postIndex)
+            this.toasterStore.cleanToaster()
         },
 
         loadMore() {

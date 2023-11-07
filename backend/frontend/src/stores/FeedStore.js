@@ -42,31 +42,6 @@ export const feedStore = defineStore("feed", {
     actions: {
         throwError(error) {
             logError(error);
-            this.status = `Error: ${error}`
-        },
-
-        async showProgress(job) {
-            let tick = 0;
-            this.toasting = true
-
-            await new Promise(resolve => setTimeout(resolve, TICK_RATE))
-
-            while(this.toasting) {
-                if(this.toasting) {
-                    this.status = `Working ${job}${'.'.repeat(tick)}`
-                
-                    tick++;
-                    if(tick === 4) {
-                        tick = 0;
-                    }
-                }
-                await new Promise(resolve => setTimeout(resolve, TICK_RATE))
-            }
-        },
-
-        cleanToaster() {
-            this.toasting = false;
-            this.status = null 
         },
 
         async setToken (tokenFn) { //very simple, just await the token function and set it as the token
@@ -82,7 +57,7 @@ export const feedStore = defineStore("feed", {
 
         async fetchInit() {
             log('Fetching initial data')
-            this.showProgress('Loading Feed');
+
             const userInfo = await fetch(API_ROUTE + "users/userinfo", {
                 headers: {
                     "Authorization": `Bearer ${this.token}`
@@ -110,13 +85,11 @@ export const feedStore = defineStore("feed", {
             await this.switchScene(this.preferredScene, true)
 
             log("Successfully initialized data")
-            this.cleanToaster()
             return 'done'
         },
 
         loadMorePosts() {
             log("Loading more posts")
-            this.showProgress("Loading more posts")
             let extraToFetch = postBatchSize - this.lazyStack.length;
             this.offloadLazy();
             if(extraToFetch > 0) {
@@ -124,7 +97,6 @@ export const feedStore = defineStore("feed", {
             }
 
             this.fetchPosts(postBatchSize, true);
-            this.cleanToaster()
         },
 
         async fetchPosts(postBatchSize, pushToLazyStack = false, gradual = false) {
@@ -249,7 +221,6 @@ export const feedStore = defineStore("feed", {
 
         async fetchComments(parents, batchsize, gradual) {
             log(`Fetching ${batchsize} comments on target of id ${parents[parents.length -1]} with gradual=${gradual}`)
-            this.showProgress('Getting Comments')
 
             let target = this.getComment(parents);
 
@@ -281,14 +252,12 @@ export const feedStore = defineStore("feed", {
             } else {
                 this.throwError("Socket not authenticated")
             }
-            this.cleanToaster()
             log("Comments Fetched")
         },
 
         async createPost(post) {
             if(!this.posting) {
                 this.posting = true;
-                this.showProgress('Posting')
                 log("Creating post: " + JSON.stringify(post))
     
                 // store that the post is posting so it shows up as such
@@ -327,7 +296,6 @@ export const feedStore = defineStore("feed", {
                     posts[postIndex].posting = false;
                     posts[postIndex].postID = data.ID;
                 }
-                this.cleanToaster()
                 this.posting = false;
             } else {
                 this.throwError("Already Posting")
@@ -341,7 +309,6 @@ export const feedStore = defineStore("feed", {
                     title,
                     pages,
                 };
-                this.showProgress("Creating Document")
                 const request = await fetch(API_ROUTE + 'feed/create_document/', {
                     method: "POST",
                     headers: {
@@ -357,7 +324,6 @@ export const feedStore = defineStore("feed", {
                     this.libraryDocuments.push(data)
                 }
 
-                this.cleanToaster();
 
                 return data;
             }
@@ -367,7 +333,6 @@ export const feedStore = defineStore("feed", {
             // optimistically like post
             let posts = this.getPosts();
             if(!posts[postIndex].posting) {
-                this.showProgress('Liking')
                 log("Liking/Unliking post of index " + postIndex)
                 posts[postIndex].likes += posts[postIndex].liked ? -1 : 1
                 posts[postIndex].liked = !posts[postIndex].liked;
@@ -395,7 +360,6 @@ export const feedStore = defineStore("feed", {
                 } else {
                     log("Successfully liked/unliked post")
                 }
-                this.cleanToaster()
             }
         },
 
@@ -405,7 +369,6 @@ export const feedStore = defineStore("feed", {
             if(post.posting) {
                 return
             }
-            this.showProgress("Liking");
             log(`Liking comment with parents ${parents.join(', ')}`)
 
             let comment = this.getComment(parents);
@@ -447,7 +410,6 @@ export const feedStore = defineStore("feed", {
                 log("Successfully liked/unliked comment")
                 const data = await response.json(); // returns true if already liked
                 console.log(data, comment)
-                this.cleanToaster()
             }
         },
 
@@ -468,7 +430,6 @@ export const feedStore = defineStore("feed", {
         async createComment(content, parents) {
             let post = this.getPostById(parseInt(parents[0]));
             if(!post.posting) {
-                this.showProgress("Commenting")
                 let postIndex = post.index;
                 post = post.post;
 
@@ -500,7 +461,6 @@ export const feedStore = defineStore("feed", {
                     this.throwError("Couldn't create comment")   
                 }
                 this.status = null
-                this.cleanToaster()
             }
         },
 
@@ -524,7 +484,6 @@ export const feedStore = defineStore("feed", {
 
         async switchCategory(categoryName, asynchronous = false) {
             log("Switching to category " + categoryName)
-            this.showProgress('Switching Category')
             this.currentCategory = categoryName;
 
             if(asynchronous) {
@@ -534,12 +493,10 @@ export const feedStore = defineStore("feed", {
             }
 
             this.fetchPosts(postBatchSize, true)
-            this.cleanToaster()
         },
 
         async switchScene(name, asynchronous = false) {
             log("Switching to scene " + name);
-            this.showProgress('Switching Scene')
 
             this.currentScene = name;
 
@@ -547,7 +504,6 @@ export const feedStore = defineStore("feed", {
 
             await this.switchCategory('general', asynchronous);
             log("Successfully switched scenes")
-            this.cleanToaster()
         },
 
         setupCommentParents(postID = this.newCommentParents[0], parents = this.newCommentParents.slice(1)) {

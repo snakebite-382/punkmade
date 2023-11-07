@@ -18,6 +18,8 @@
 
 <script>
 import { API_ROUTE } from '../../api';
+import {toaster} from '../stores/Toaster'
+import {mapStores} from 'pinia'
 import Seperator from '../components/Reusable/Seperator.vue';
 import MyScenes from '../components/ScenesManager/MyScenes.vue';
 import EditDetails from '../components/User/EditDetails.vue';
@@ -40,6 +42,10 @@ export default {
         }
     },
 
+    computed: {
+        ...mapStores(toaster)
+    },
+
     components: {
         Seperator,
         MyScenes,
@@ -47,6 +53,8 @@ export default {
     },
 
     async created() {
+        this.toasterStore.work("Loading")
+
         if(typeof this.rawUser.sub === 'string') {
             this.userID = this.rawUser.sub
         } else {
@@ -66,6 +74,8 @@ export default {
 
         this.user = data;
         this.splitter()
+
+        this.toasterStore.cleanToaster()
     },
 
     methods: {

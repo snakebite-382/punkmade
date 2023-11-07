@@ -22,6 +22,8 @@ import Seperator from '../components/Reusable/Seperator.vue';
 import StyledBtn from '../components/Reusable/StyledBtn.vue';
 import { converter } from '../../markdown';
 import { API_ROUTE } from '../../api';
+import {toaster} from '../stores/Toaster';
+import {mapStores} from 'pinia'
 import ReportButton from '../components/Feed/ReportButton.vue';
 
 export default {
@@ -38,14 +40,20 @@ export default {
     },
 
     components: {
-    FullscreenLoading,
-    Seperator,
-    StyledBtn,
-    ReportButton
-},
+        FullscreenLoading,
+        Seperator,
+        StyledBtn,
+        ReportButton
+    },
+
+    computed: {
+        ...mapStores(toaster)
+    },
 
     async created() {
         if(!this.doc.loaded) {
+            this.toasterStore.work("Loading")
+
             const request = await fetch(`${API_ROUTE}feed/get_document/${this.docID}`)
 
             const data = await request.json();
@@ -54,6 +62,8 @@ export default {
         }
 
         this.isLoading = false;
+
+        this.toasterStore.cleanToaster()
     },
 
     methods: {
