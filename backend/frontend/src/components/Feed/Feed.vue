@@ -27,8 +27,8 @@
 import Posts from './Posts.vue';
 import FullscreenLoading from '../Loading/Fullscreen.vue';
 import CreatePost from './CreatePost.vue';
-import CategoryNav from './CategoryNav.vue';
-import SceneNav from './SceneNav.vue';
+import CategoryNav from './Navs/CategoryNav.vue';
+import SceneNav from './Navs/SceneNav.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
 import Nav from '../Nav.vue';
 

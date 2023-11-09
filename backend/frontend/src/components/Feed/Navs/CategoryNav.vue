@@ -8,8 +8,8 @@
 </template>
 
 <script>
-import Nav from '../Nav.vue';
-import { feedStore } from '../../stores/FeedStore';
+import Nav from '../../Nav.vue';
+import { feedStore } from '../../../stores/FeedStore';
 import { mapStores } from 'pinia'
 
 export default {

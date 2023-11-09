@@ -21,11 +21,11 @@
 </template>
 
 <script>
-import { feedStore } from '../../stores/FeedStore';
+import { feedStore } from '../../../stores/FeedStore';
 import { mapStores } from 'pinia';
-import LikeButton from './LikeButton.vue';
-import StyledBtn from '../Reusable/StyledBtn.vue';
-import ReportButton from './ReportButton.vue';
+import LikeButton from '../LikeButton.vue';
+import StyledBtn from '../../Reusable/StyledBtn.vue';
+import ReportButton from '../ReportButton.vue';
 
 export default {
     name: "Comment",

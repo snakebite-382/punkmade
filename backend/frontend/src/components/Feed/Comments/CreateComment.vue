@@ -5,10 +5,10 @@
 </template>
 
 <script>
-import StyledInput from '../Reusable/StyledInput.vue';
-import StyledBtn from '../Reusable/StyledBtn.vue';
-import { feedStore } from '../../stores/FeedStore';
-import { toaster } from '../../stores/Toaster'
+import StyledInput from '../../Reusable/StyledInput.vue';
+import StyledBtn from '../../Reusable/StyledBtn.vue';
+import { feedStore } from '../../../stores/FeedStore';
+import { toaster } from '../../../stores/Toaster'
 import { mapStores } from 'pinia';
 
 export default {

@@ -12,7 +12,7 @@
 <script>
 import Comment from './Comment.vue';
 import CreateComment from './CreateComment.vue';
-import { feedStore } from '../../stores/FeedStore';
+import { feedStore } from '../../../stores/FeedStore';
 import { mapStores } from 'pinia';
 
 export default {

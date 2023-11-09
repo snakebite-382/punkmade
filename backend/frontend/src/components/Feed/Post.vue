@@ -27,8 +27,8 @@
 
 <script>
 import LikeButton from './LikeButton.vue';
-import CommentButton from './CommentButton.vue';
-import CommentSection from './CommentSection.vue';
+import CommentButton from './Comments/CommentButton.vue';
+import CommentSection from './Commments/CommentSection.vue';
 import Seperator from '../Reusable/Seperator.vue';
 import ReportButton from './ReportButton.vue';
 
