@@ -23,9 +23,9 @@
 <script>
 import { feedStore } from '../../../stores/FeedStore';
 import { mapStores } from 'pinia';
-import LikeButton from '../LikeButton.vue';
+import LikeButton from '../Buttons/LikeButton.vue';
 import StyledBtn from '../../Reusable/StyledBtn.vue';
-import ReportButton from '../ReportButton.vue';
+import ReportButton from '../Buttons/ReportButton.vue';
 
 export default {
     name: "Comment",

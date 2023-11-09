@@ -5,8 +5,8 @@
 </template>
 
 <script>
-import { API_ROUTE } from '../../../api';
-import {toaster} from '../../stores/Toaster'
+import { API_ROUTE } from '../../../../api';
+import {toaster} from '../../../stores/Toaster'
 import {mapStores} from 'pinia'
 
 export default {

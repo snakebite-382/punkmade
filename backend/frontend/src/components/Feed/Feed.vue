@@ -24,9 +24,9 @@
 
 <script>
 // components
-import Posts from './Posts.vue';
+import Posts from './Posts/Posts.vue';
 import FullscreenLoading from '../Loading/Fullscreen.vue';
-import CreatePost from './CreatePost.vue';
+import CreatePost from './Posts/CreatePost.vue';
 import CategoryNav from './Navs/CategoryNav.vue';
 import SceneNav from './Navs/SceneNav.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
@@ -77,7 +77,6 @@ export default {
         if(!this.feedStore.initialized) {
             // initialize the store
             await this.feedStore.fetchInit(this.user);
-
             // store is initialized
             this.feedStore.initialized = true;
         }
@@ -117,7 +116,6 @@ export default {
                     id: scene.name
                 }
             })
-
             return scenes
         },
 

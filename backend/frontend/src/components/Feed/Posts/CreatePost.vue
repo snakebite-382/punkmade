@@ -14,12 +14,12 @@
 </template>
 
 <script>
-import { feedStore } from '../../stores/FeedStore';
-import { toaster } from '../../stores/Toaster'
+import { feedStore } from '../../../stores/FeedStore';
+import { toaster } from '../../../stores/Toaster'
 import { mapStores } from 'pinia';
-import StyledInput from '../Reusable/StyledInput.vue';
-import StyledBtn from '../Reusable/StyledBtn.vue';
-import { converter } from '../../../markdown';
+import StyledInput from '../../Reusable/StyledInput.vue';
+import StyledBtn from '../../Reusable/StyledBtn.vue';
+import { converter } from '../../../../markdown';
 
 export default {
     name: 'CreatePost',

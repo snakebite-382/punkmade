@@ -26,15 +26,15 @@
 </template>
 
 <script>
-import LikeButton from './LikeButton.vue';
-import CommentButton from './Comments/CommentButton.vue';
-import CommentSection from './Commments/CommentSection.vue';
-import Seperator from '../Reusable/Seperator.vue';
-import ReportButton from './ReportButton.vue';
+import LikeButton from '../Buttons/LikeButton.vue';
+import CommentButton from '../Comments/CommentButton.vue';
+import CommentSection from '../Comments/CommentSection.vue';
+import Seperator from '../../Reusable/Seperator.vue';
+import ReportButton from '../Buttons/ReportButton.vue';
 
-import { converter } from '../../../markdown';
+import { converter } from '../../../../markdown';
 
-import { feedStore } from '../../stores/FeedStore';
+import { feedStore } from '../../../stores/FeedStore';
 import { mapStores } from 'pinia';
 
 export default {

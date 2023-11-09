@@ -24,7 +24,7 @@ import { converter } from '../../markdown';
 import { API_ROUTE } from '../../api';
 import {toaster} from '../stores/Toaster';
 import {mapStores} from 'pinia'
-import ReportButton from '../components/Feed/ReportButton.vue';
+import ReportButton from '../components/Feed/Buttons/ReportButton.vue';
 
 export default {
     name: "Document",

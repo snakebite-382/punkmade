@@ -8,8 +8,8 @@
 </template>
 
 <script>
-import { feedStore } from '../../stores/FeedStore';
-import {toaster} from '../../stores/Toaster'
+import { feedStore } from '../../../stores/FeedStore';
+import {toaster} from '../../../stores/Toaster'
 import { mapStores } from 'pinia';
 import Post from './Post.vue';
 
