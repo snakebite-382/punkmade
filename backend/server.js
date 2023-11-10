@@ -32,12 +32,13 @@ app.use(limiter);
 
 // use helmet to set some recommended security headers
 let NogginProtector = helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'", 'https://punkmade.us.auth0.com'],
-      imgSrc: ["*"]
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'", 'https://punkmade.us.auth0.com', 'https://maps.googleapis.com/maps/api/js/', 'https://maps.googleapis.com/$rpc/google.internal.maps.mapsjs.v1.MapsJsInternalService/GetViewportInfo'],
+            scriptSrc: ["'self'", 'https://maps.googleapis.com/maps/api/js', "https://maps.googleapis.com/maps-api-v3/api/js/54/12a/"], 
+            imgSrc: ["*"]
+        }
     }
-  }
 });
 
 app.use(NogginProtector);
