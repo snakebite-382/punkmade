@@ -20,5 +20,6 @@ export default {
       extend: {},
   },
   plugins: [],
-  prefix: 'tw-'
+  prefix: 'tw-',
+    important: true
 }

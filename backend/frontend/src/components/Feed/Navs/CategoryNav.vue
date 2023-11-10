@@ -1,9 +1,9 @@
 <template>
-    <div class="cat-nav tw-w-fitl">
-        <span @click="expanded = !expanded">Categories <vue-feather type="chevron-right" :class="`${expanded ? 'tw-rotate-90' : ' '}`"/></span>
+    <div class="cat-nav tw-w-fit">
+        <span @click="expanded = !expanded">Categories <vue-feather class="tw-hidden lg:tw-inline-block" type="chevron-right" :class="`${expanded ? 'tw-rotate-90' : ' '}`"/></span>
         <Nav :items="categories" @nav-item-click="(data) => {
             $emit('nav-item-click', data) 
-        }" :active="feedStore.currentCategory" class="tw-flex-col tw-w-fit tw-ml-4" v-show="expanded"/>
+        }" :active="feedStore.currentCategory" class="tw-flex-col tw-w-fit lg:tw-ml-4" v-if="expanded"/>
     </div>
 </template>
 

@@ -5,15 +5,15 @@
                         lg:tw-flex-col tw-justify-evenly lg:tw-justify-start
                         tw-row-start-1 tw-col-end-3 tw-col-start-1 lg:tw-col-end-2 
                         tw-border-red tw-border-solid tw-border-4
-                        tw-h-fit tw-p-4 tw-text-xl tw-z-10 
+                        tw-h-fit tw-p-4 tw-z-10 
                         tw-w-full lg:tw-w-fit ${showCreatePost ? 'tw-h-full tw-w-full' : ''} 
-                        tw-fixed tw-bg-grey`">
+                        tw-fixed tw-bg-grey tw-text-sm md:tw-text-lg lg:tw-text-xl`">
                 <SceneNav :scenes="returnNavScenes()" @nav-item-click="sceneNavClick" id="Scene-Nav"/>
                 <CategoryNav :categories="returnNavCategories()" @nav-item-click="categoriesNavClick" id="Category-Nav"/>
                 <router-link :to="`/library?scene=${encodeURIComponent(feedStore.currentScene)}`">Library</router-link>
                 <router-link :to="`/reports?scene=${encodeURIComponent(feedStore.currentScene)}`">Reports</router-link>
-                <div class="creation tw-text-lg tw-mt-2">
-                    <StyledBtn @click="toggleCreatePost" class="tw-m">{{ showCreatePost ? "close" : "post something" }}</StyledBtn> 
+                <div class="creation lg:tw-mt-2">
+                    <StyledBtn @click="toggleCreatePost" class="tw-m">{{ showCreatePost ? "close" : "post" }}</StyledBtn> 
                     <CreatePost v-show="showCreatePost" class="tw-mt-2"/>
                 </div>
             </Nav>

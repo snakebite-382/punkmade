@@ -65,7 +65,7 @@ let navRoutes = [
   },
   {
     path: '/scenes/',
-    name: 'Scene Manager'
+    name: 'Scenes'
   }
 ]
 

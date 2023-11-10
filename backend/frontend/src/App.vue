@@ -1,6 +1,6 @@
 <template>
   <div id="App" :class="`tw-bg-grey tw-w-full tw-min-h-screen tw-text-white tw-snap-none`">
-    <NavBar class="tw-sticky tw-top-0 tw-bg-grey" :pages="pages" :active="this.$route.path"><AuthButton/></NavBar>
+    <NavBar class="tw-absolute tw-top-0 tw-bg-grey" :pages="pages" :active="this.$route.path"><AuthButton/></NavBar>
     <div id="Body">
         <router-view></router-view>
      </div> 
