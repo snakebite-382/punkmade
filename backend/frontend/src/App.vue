@@ -1,8 +1,9 @@
-
 <template>
   <div id="App" :class="`tw-bg-grey tw-w-full tw-min-h-screen tw-text-white tw-snap-none`">
-    <NavBar :pages="pages" :active="this.$route.path"><AuthButton/></NavBar>
-    <router-view></router-view>
+    <NavBar class="tw-sticky tw-top-0 tw-bg-grey" :pages="pages" :active="this.$route.path"><AuthButton/></NavBar>
+    <div id="Body">
+        <router-view></router-view>
+     </div> 
     <StatusToaster/> 
   </div>
 </template>

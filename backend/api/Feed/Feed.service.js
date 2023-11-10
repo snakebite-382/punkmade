@@ -172,7 +172,9 @@ async function likeComment(req, res) {
 }
 
 async function createComment(req, res) {
+    let userID = req.auth.payload.sub;
     let formData = req.body;
+
     if(req.body.comment && typeof req.body.comment === 'string' && req.body.comment.length <= 500) {
         formData.root = parseInt(formData.root);
         formData.parent = parseFloat(formData.parent)
@@ -182,7 +184,7 @@ async function createComment(req, res) {
         await dbDriver.executeQuery(
             `MATCH (parent:POST|COMMENT)
             WHERE ID(parent) = $parentID
-            MATCH (user:USER)-[:PART_OF]->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]->(:CATEGORY {name: $categoryName})<-[:POSTED_ON]-(root:POST)
+            MATCH (user:USER {authID: $authID})-[:PART_OF]->(:SCENE {name: $sceneName})-[:HAS_CATEGORY]->(:CATEGORY {name: $categoryName})<-[:POSTED_ON]-(root:POST)
             WHERE ID(root) = $rootID
             CREATE (user)-[:COMMENTED]->(comment:COMMENT {content: $content, timestamp: $timestamp})-[:${relType}]->(parent)`,
             {
@@ -192,6 +194,7 @@ async function createComment(req, res) {
                 categoryName: formData.category,
                 sceneName: formData.scene,
                 timestamp: Date.now(),
+                authID: userID,
             },
             {database: 'neo4j'}
         )

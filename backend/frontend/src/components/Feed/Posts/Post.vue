@@ -1,5 +1,5 @@
 <template>
-    <div class="post thin-border tw-p-3 tw-my-2">
+    <div class="post thin-border tw-p-3 tw-my-2 tw-max-w-[75vw] tw-w-fit">
         <router-link :to="`/profile?user=${post.author.userID}`" class="creator tw-text-xl tw-text-center">
             {{ post.author.name }}
         </router-link>

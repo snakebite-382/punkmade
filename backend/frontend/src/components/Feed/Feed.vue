@@ -1,7 +1,13 @@
-<template>
-    <div id="Feed" class="">
-        <div v-show="!isLoading" v-if="feedStore.initialized" :class="`${showCreatePost ? '' : 'tw-grid grid'} tw-min-h-full`">
-            <Nav :class="`sidebar tw-flex-col tw-col-start-1 tw-justify-start tw-border-red tw-border-solid tw-border-4 tw-h-fit tw-p-4 tw-text-xl tw-row-start-1 tw-z-10 tw-w-fit ${showCreatePost ? 'tw-h-full tw-w-full' : ''}`">
+<template> 
+    <div id="Feed">
+        <div v-show="!isLoading" v-if="feedStore.initialized" :class="`${showCreatePost ? '' : 'tw-grid grid'} tw-min-h-full tw-min-w-full`">
+            <Nav :class="`sidebar
+                        lg:tw-flex-col tw-justify-evenly lg:tw-justify-start
+                        tw-row-start-1 tw-col-end-3 tw-col-start-1 lg:tw-col-end-2 
+                        tw-border-red tw-border-solid tw-border-4
+                        tw-h-fit tw-p-4 tw-text-xl tw-z-10 
+                        tw-w-full lg:tw-w-fit ${showCreatePost ? 'tw-h-full tw-w-full' : ''} 
+                        tw-fixed tw-bg-grey`">
                 <SceneNav :scenes="returnNavScenes()" @nav-item-click="sceneNavClick" id="Scene-Nav"/>
                 <CategoryNav :categories="returnNavCategories()" @nav-item-click="categoriesNavClick" id="Category-Nav"/>
                 <router-link :to="`/library?scene=${encodeURIComponent(feedStore.currentScene)}`">Library</router-link>
@@ -11,8 +17,11 @@
                     <CreatePost v-show="showCreatePost" class="tw-mt-2"/>
                 </div>
             </Nav>
-            
-            <div class="center tw-col-start-1 tw-col-span-2 tw-row-start-1 tw-flex tw-flex-col tw-items-center" v-show="!showCreatePost">
+
+            <div :class="`center
+                    tw-col-start-1 tw-col-end-3 lg:max-xl:tw-ml-[10rem]                    
+                    tw-flex tw-flex-col tw-items-center max-lg:tw-mt-[5rem]`"
+                v-show="!showCreatePost">
                 <Posts/>
             </div>
         </div>
