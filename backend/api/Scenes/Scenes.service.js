@@ -80,9 +80,9 @@ async function create(req, res) {
     if(!invalid) {
         // get the name (cuz we don't trust users, grrrr)
         let name = await fetchReverseGeocode(...formData.center); 
-        name = name.locality + " Punk"
+        name = `${name.locality} Punk`;
 
-        let userID = req.auth.payload.sub;
+        const userID = req.auth.payload.sub;
 
         await dbDriver.executeQuery(
             `MATCH (user:USER {authID: $authID}) 
@@ -91,12 +91,63 @@ async function create(req, res) {
             CREATE (user)-[:PART_OF]->(scene)
             MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'general'})
             MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'art/music'}) 
-            MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'political'})`,
+            MERGE (scene)-[:HAS_CATEGORY]->(:CATEGORY {name: 'political'})
+            MERGE (scene)-[:HAS_DOCUMENT]->(:DOCUMENT {title: "Markdown", timestamp: $time})-[:HAS_PAGE]
+            ->(:PAGE {index: 0, content: '# Basic markdown syntax
+
+**Any styling can be escaped with \\**
+
+**Make sure to add an extra line of whitespace between lines you don\\'t want combined**
+
+---
+## Headings
+
+\# use hashmarks for headings
+
+the more hashes the smaller the heading
+
+# 1 hash
+
+## 2 hash
+
+### 3 hash
+---
+## Links
+
+\[text](url)
+to link a url
+
+Ex: 
+
+\[example]\(https://punkmade.fly.dev)
+
+[example](https://punkmade.fly.dev)
+
+\![screenreader desc]\(url)
+
+Ex:
+\![favicon]\(https://punkmade.fly.dev/favicon.ico)
+![favicon](https://punkmade.fly.dev/favicon.ico)
+
+---
+
+## Text Decoration
+\*\*text** for **bold**
+
+\*text*  for *italics*
+
+\*\*\*text*** for ***both***
+
+\--- for a seperator
+Ex:
+
+---'})`,
             {
                 authID: userID,
                 sceneName: name,
                 center: formData.center,
-                range: formData.range
+                range: formData.range,
+                time: Date.now(),
             },
             {database: 'neo4j'}
         )
