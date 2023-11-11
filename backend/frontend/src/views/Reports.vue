@@ -53,7 +53,7 @@ export default {
             await this.feedStore.initSocket();
         }
 
-        this.reports = await this.feedStore.fetchReports(this.scene, this.reports.length, this.reports.length + 1);
+        this.reports = await this.feedStore.fetchReports(this.scene, this.reports.length, this.reports.length + 100);
         this.toasterStore.cleanToaster()
     },
 
@@ -84,7 +84,7 @@ export default {
         },
         async loadReports() {
             this.toasterStore.work("Loading More")
-            const results = await this.feedStore.fetchReports(this.scene, this.reports.length, this.reports.length + 1);
+            const results = await this.feedStore.fetchReports(this.scene, this.reports.length, this.reports.length + 100);
             for(const result of results) {
                 this.reports.push(result)
             } 
