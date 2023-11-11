@@ -279,6 +279,79 @@ async function usernameAvailable(name) {
     return availableRecords.length === 0;
 }
 
+async function getNotifs(req, res) {
+    const userID = req.auth.payload.sub;
+
+    const {records: likeNotifRecords} = await dbDriver.executeQuery(
+        `MATCH (:USER {authID: $authID})-[:POSTED | COMMENTED]->(media:POST | COMMENT | DOCUMENT)
+        <-[like:LIKED]-(user:USER)
+        WHERE like.seen IS null  
+        RETURN media.content as content, media.title as title, user.name as origin, ID(like) as mediaID
+        `,
+        {
+            authID: userID,
+        },
+        {database: 'neo4j'}
+    );
+    console.log(likeNotifRecords)
+    const notifs = []
+
+    for(const likeNotif of likeNotifRecords) {
+        notifs.push({
+            title: likeNotif.get("content") || likeNotif.get("title"),
+            origin: likeNotif.get("origin"),
+            type: "like",
+            mediaID: likeNotif.get("mediaID").toNumber()
+        }) 
+    }
+
+    const {records: replyNotifRecords} = await dbDriver.executeQuery(
+        `MATCH (:USER {authID: $authID})-[:POSTED | COMMENTED]->(media:POST | COMMENT)
+        <-[reply:COMMENTED_ON | REPLIED_TO]-(r:COMMENT)<-[:COMMENTED]-(origin:USER)
+        WHERE reply.seen IS null
+        RETURN media.content as content, origin.name as origin, ID(reply) as mediaID, r.content as reply
+        `,
+        {
+            authID: userID,
+        },
+        {database: 'neo4j'}
+    );
+    console.log(replyNotifRecords)
+    for(const replyNotif of replyNotifRecords) {
+        notifs.push({
+            title: replyNotif.get("content"),
+            origin: replyNotif.get("origin"),
+            type: "reply",
+            mediaID: replyNotif.get("mediaID").toNumber(),
+            reply: replyNotif.get("reply"),
+        })
+    };
+
+    res.send(notifs)
+}
+
+async function dismissNotif(req, res) {
+    const userID = req.auth.payload.sub;
+    const formData = req.body;
+
+    console.log(req.body.id, userID)
+
+    const {records: successRecords} = await dbDriver.executeQuery(
+        `MATCH (:USER {authID: $authID})-[:POSTED | COMMENTED]->
+        (media:POST | COMMENT)<-[notif:COMMENTED_ON | REPLIED_TO | LIKED]-(x)
+        WHERE ID(notif) = $mediaID
+        SET notif.seen = true
+        RETURN notif as worked`,
+        {
+            authID: userID,
+            mediaID: formData.id
+        },
+        {database: 'neo4j'}
+    )
+    console.log(successRecords)
+    res.send(successRecords.length > 0)
+}
+
 module.exports = {
     loggedin,
     userinfo,
@@ -286,5 +359,7 @@ module.exports = {
     getProfile,
     leaveScene,
     preferScene,
-    doneOnboarding, 
+    doneOnboarding,
+    getNotifs,
+    dismissNotif,
 }

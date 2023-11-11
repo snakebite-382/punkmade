@@ -1,5 +1,5 @@
 <template>
-<div id="toaster" class="tw-absolute tw-mt-4">
+<div id="toaster" class="tw-fixed tw-mt-4">
     <div id="inner" 
         :class="`tw-text-grey 
            tw-bg-${toasterStore.status || this.toasterStore.lastStatus} ${toasterStore.show ? 'show' : 'hide'}`"

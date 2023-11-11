@@ -1,6 +1,6 @@
 <template>
     <div id="Profile" class="tw-flex tw-flex-col tw-items-center tw-mt-10">
-        <div class="card-info thin-border tw-p-4 tw-w-[50vw]">
+        <div class="card-info thin-border tw-p-4 tw-w-[85vw]">
             <h1 class="tw-text-2xl underline tw-text-center">{{ user.name }} <vue-feather @click="showEdit=!showEdit" class="tw-text-xl tw-pl-2" type="edit-2"/></h1>
             <p class="pronouns tw-text-lg tw-text-center"><p v-for="(pronoun, i) of pronouns">{{ pronoun + (i < pronouns.length-1 ? "/": ' ') }}</p></p>
             <Seperator class="tw-h-1 tw-mt-3 tw-mb-2"/>
@@ -11,7 +11,7 @@
             <EditDetails v-show="showEdit" :check-all="false" @success="changed" class="tw-w-full tw-mx-2 tw-my-8"/>
 
             <MyScenes class="tw-w-full"/>
-            
+            <Notifs/> 
         </div>
     </div>
 </template>
@@ -23,6 +23,7 @@ import {mapStores} from 'pinia'
 import Seperator from '../components/Reusable/Seperator.vue';
 import MyScenes from '../components/ScenesManager/MyScenes.vue';
 import EditDetails from '../components/User/EditDetails.vue';
+import Notifs from "../components/User/Notifs.vue"
 
 export default {
     name: 'Profile',
@@ -49,7 +50,8 @@ export default {
     components: {
         Seperator,
         MyScenes,
-        EditDetails
+        EditDetails,
+        Notifs
     },
 
     async created() {
