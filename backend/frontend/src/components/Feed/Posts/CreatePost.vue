@@ -1,5 +1,5 @@
 <template>
-    <form @submit="onSubmit" class="tw-w-full">
+    <form @submit="onSubmit" >
         <textarea 
             type="text" placeholder="post something..." name="content" id="content-input" v-model="content" autocomplete="off" 
             class="tw-bg-grey tw-p-1 thin-border tw-leading-tight tw-w-full tw-h-[50vh] tw-resize-y"
@@ -31,25 +31,12 @@ export default {
 
     data() {
         return {
-            content: `# Hello
-## My Dears
-1) OL
-* UL
-
-[I'm an inline-style link](https://www.google.com)
-
-\`code\`
-
-| Tables        | Are           | Cool |
+            content: `# Hello\n## My Dears\n1) OL
+* UL\n\n[I'm an inline-style link](https://www.google.com)\n\`code\`\n| Tables        | Are           | Cool |\n
 | ------------- |:-------------:| -----:|
 | col 3 is      | right-aligned | $1600 |
 | col 2 is      | centered      |   $12 |
-| zebra stripes | are neat      |    $1 |
-
-> Blockquotes are very handy in email to emulate reply text.
-> This line is part of the same quote.
-
----
+| zebra stripes | are neat      |    $1 |\n> Blockquotes are very handy in email to emulate reply text\n.> This line is part of the same quote.\n---
 `,
             converter
         }

@@ -1,13 +1,13 @@
 <template> 
     <div id="Feed">
-        <div v-show="!isLoading" v-if="feedStore.initialized" :class="`${showCreatePost ? '' : 'tw-grid grid'} tw-min-h-full tw-min-w-full`">
+        <div v-show="!isLoading" v-if="feedStore.initialized" :class="`tw-grid grid tw-min-h-full tw-min-w-full`">
             <Nav :class="`sidebar
-                        lg:tw-flex-col tw-justify-evenly lg:tw-justify-start
-                        tw-row-start-1 tw-col-end-3 tw-col-start-1 lg:tw-col-end-2 
-                        tw-border-red tw-border-solid tw-border-4
-                        tw-h-fit tw-p-4 tw-z-10 
-                        tw-w-full lg:tw-w-fit ${showCreatePost ? 'tw-h-full tw-w-full' : ''} 
-                        tw-fixed tw-bg-grey tw-text-sm md:tw-text-lg lg:tw-text-xl`"
+                    lg:tw-flex-col tw-justify-evenly lg:tw-justify-start
+                    tw-row-start-1 tw-col-end-3 tw-col-start-1 lg:tw-col-end-2 
+                    tw-border-red tw-border-solid tw-border-4
+                    tw-p-4 tw-z-10 
+                    ${showCreatePost ? 'tw-w-full tw-col-end-3' : ''} tw-w-full lg:tw-w-fit 
+                    tw-fixed tw-bg-grey tw-text-sm md:tw-text-lg lg:tw-text-xl`"
             >
 
                 <Dropdown 
@@ -26,17 +26,19 @@
 
                 <router-link :to="`/library?scene=${encodeURIComponent(feedStore.currentScene)}`">Library</router-link>
                 <router-link :to="`/reports?scene=${encodeURIComponent(feedStore.currentScene)}`">Reports</router-link>
-                <div class="creation lg:tw-mt-2">
-                    <StyledBtn @click="toggleCreatePost" class="tw-m">{{ showCreatePost ? "close" : "post" }}</StyledBtn> 
-                    <CreatePost v-show="showCreatePost" class="tw-mt-2"/>
-                </div>
+                
+                <div class="creation">
+                    <StyledBtn @click="toggleCreatePost" >{{ showCreatePost ? "close" : "post" }}</StyledBtn> 
+                </div> 
             </Nav>
-
+            
+ 
             <div :class="`center
                     tw-col-start-1 tw-col-end-3 lg:max-xl:tw-ml-[10rem]                    
-                    tw-flex tw-flex-col tw-items-center max-lg:tw-mt-[5rem]`"
-                v-show="!showCreatePost">
-                <Posts/>
+                    tw-flex tw-flex-col tw-items-center max-lg:tw-mt-[5rem] lg:tw-mt-10`"
+                >
+                <Posts v-if="!showCreatePost"/>
+                <CreatePost v-show="showCreatePost" />
             </div>
         </div>
         <div v-show="isLoading">
