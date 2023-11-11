@@ -9,28 +9,31 @@ async function loggedin(req, res) {
         return 
     }
 
-    let userID = req.auth.payload.sub
+    const userID = req.auth.payload.sub
 
-    let auth0User = await auth0Manager.getUser({id: userID})
+    const auth0User = await auth0Manager.getUser({id: userID})
     
-    let onboarded = auth0User.hasOwnProperty('app_metadata')
+    const onboarded = auth0User.hasOwnProperty('app_metadata')
 
     if(!onboarded) {
-        // add user to db
-        auth0User.app_metadata = {
-            onboarded: true
-        }
-
-        const { records} = await dbDriver.executeQuery(
-            'CREATE (user:USER {name: $name, authID: $authID}) RETURN user',
+        await dbDriver.executeQuery(
+            `CREATE (user:USER {name: $name, authID: $authID})
+            SET user.bio = "New User"
+            SET user.pronouns="Punk/Made"
+            RETURN user`,
             { name: auth0User.nickname, authID: userID},
             { database: 'neo4j' }
         )
-
-        await auth0Manager.updateAppMetadata({id: userID}, auth0User.app_metadata)
     }
 
     res.send(onboarded)
+}
+
+async function doneOnboarding(req, res) {
+    console.log("HIT")
+    userID = req.auth.payload.sub;
+    await auth0Manager.updateAppMetadata({id: userID}, {onboarded: true})
+    res.send(true) 
 }
 
 async function userinfo (req, res) {
@@ -42,7 +45,7 @@ async function userinfo (req, res) {
         return;
     }
 
-    let userID = req.auth.payload.sub
+    const userID = req.auth.payload.sub
 
     const { records } = await dbDriver.executeQuery(
         `
@@ -282,5 +285,6 @@ module.exports = {
     updateInfo,
     getProfile,
     leaveScene,
-    preferScene
+    preferScene,
+    doneOnboarding, 
 }
