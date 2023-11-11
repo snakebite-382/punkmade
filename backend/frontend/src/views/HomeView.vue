@@ -8,7 +8,7 @@
       <SplashScreen/>
     </div>
 
-    <div id="Feed" v-show="isAuthed">
+    <div id="Feed" v-if="isAuthed">
       <Feed/>
     </div>
   </div>
