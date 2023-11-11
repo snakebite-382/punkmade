@@ -1,8 +1,8 @@
 const jose = require('jose');
 const { dbDriver } = require('./db')
- 
+const { checkAndRemoveReportedMedia } = require('./Feed/Feed.service.js') 
 const JWKS = jose.createRemoteJWKSet(
-    new URL(`https://punkmade.us.auth0.com/.well-known/jwks.json`)
+    new URL("https://punkmade.us.auth0.com/.well-known/jwks.json")
 );
 
 async function WebsocketServer(io) { 
@@ -12,7 +12,7 @@ async function WebsocketServer(io) {
 function HandleConnection(socket) {
     socket.on('auth', async (token, callback) => {
         const { payload: result } = await jose.jwtVerify(token, JWKS, {
-            issuer: `https://punkmade.us.auth0.com/`,
+            issuer: "https://punkmade.us.auth0.com/",
         });
         
         if(result) {
@@ -27,7 +27,7 @@ function HandleConnection(socket) {
 
     socket.on('get posts', async (scene, category, start, end, callback) => {
         if(socket.data_authenticated) {
-            let posts = await getPosts(socket.data_userID, scene, category, start, end)
+            const posts = await getPosts(socket.data_userID, scene, category, start, end)
             callback(posts);
         } else {
             callback(false)
@@ -36,7 +36,7 @@ function HandleConnection(socket) {
 
     socket.on('get comments', async(scene, category, targetID, start, end, callback) => {
         if(socket.data_authenticated) {
-            let comments = await getComments(socket.data_userID, scene, category, targetID, start, end);
+            const comments = await getComments(socket.data_userID, scene, category, targetID, start, end);
             callback(comments);
         } else {
             callback(false);
@@ -45,7 +45,7 @@ function HandleConnection(socket) {
 
     socket.on('get documents', async(scene, start, end, callback) => {
         if(socket.data_authenticated) {
-            let documents = await getDocuments(scene, start, end)
+            const documents = await getDocuments(scene, start, end)
 
             callback(documents)
         }
@@ -56,7 +56,7 @@ function HandleConnection(socket) {
             return 
         }
 
-        let reports = await getReports(scene, start, end, socket.data_userID)
+        const reports = await getReports(scene, start, end, socket.data_userID)
 
         callback(reports)
     })
@@ -70,10 +70,13 @@ async function HandleDisconnect() {
 async function getDocuments(scene, start, end, authID) {
     start = parseInt(start);
     end = parseInt(end)
+
+    console.log(start, end)
+
     const {records: documentRecords} = await dbDriver.executeQuery(
         `MATCH (:SCENE {name: $scene})-[:HAS_DOCUMENT]->(doc:DOCUMENT)-[:HAS_PAGE]->(page:PAGE)
         RETURN doc.title AS title, doc.timestamp AS timestamp, COLLECT(page) as pages, ID(doc) as id
-        ORDER BY timestamp DESC
+        ORDER BY timestamp ASC
         SKIP toInteger($start)
         LIMIT toInteger($end)
         `,
@@ -105,10 +108,12 @@ async function getDocuments(scene, start, end, authID) {
     return documents;
 }
 
-async function getReports(scene, start, end, authID) {
-    const {records: reportRecords} = await dbDriver.executeQuery(
-        `MATCH (:SCENE {name: $scene})-[:HAS_CATEGORY | POSTED_ON | HAS_DOCUMENT | COMMENTED_ON | REPLIED_TO *]
+async function getReports(scene, start, end, authID) { const {records: reportRecords} = await dbDriver.executeQuery(
+        `OPTIONAL MATCH (:USER {authID: $authID})-[:REPORTED | VOTED_TO_REMOVE]-(reported:POST | DOCUMENT | COMMENT)
+        WITH COLLECT(reported) as reported
+        MATCH (:SCENE {name: $scene})-[:HAS_CATEGORY | POSTED_ON | HAS_DOCUMENT | COMMENTED_ON | REPLIED_TO *]
         -(media:POST | COMMENT | DOCUMENT)<-[report:REPORTED]-(reporter:USER)
+        WHERE NOT(media IN reported)
         MATCH (reportee:USER)-[:POSTED | COMMENTED]-(media)
         MATCH (:USER)-[vote:REPORTED | VOTED_TO_REMOVE]-(media)
         RETURN media.content as content, reporter.name as reporter, reportee.name as reportee, COUNT(vote) as votes, ID(media) as mediaID, media.title as title, media.timestamp as timestamp
@@ -127,6 +132,8 @@ async function getReports(scene, start, end, authID) {
     let reports = []
 
     for(let report of reportRecords) {
+        console.log("CALLING")
+        checkAndRemoveReportedMedia(report.get("mediaID"), "Boston Punk")
         const mediaID = report.get('mediaID').toNumber()
         const content = report.get('content')
         let docDetails = {};

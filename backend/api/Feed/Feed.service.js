@@ -360,9 +360,7 @@ async function voteToRemove(req, res) {
         },
         {database: 'neo4j'}
     );
-
     res.send(voteRecords[0].get('success').toNumber() > 0);
-
     checkAndRemoveReportedMedia(formData.mediaID, formData.scene)
 }
 
@@ -392,14 +390,15 @@ async function checkAndRemoveReportedMedia(mediaID, sceneName) {
     );
 
     let votes = votesForRemovalRecords[0].get('votes').toNumber()
-
+    console.log(totalUsers, votes)
     let percentVote = (votes/totalUsers) * 100;
-
+    console.log(percentVote) 
     if(percentVote >= 66) {
+        console.log("DELETE")
         await dbDriver.executeQuery(
-            `MATCH (media:POST | COMMENT | DOCUMENT)-[*]-(:SCENE {name: $sceneName})
-            OPTIONAL MATCH (media)-[:COMMENTED_ON | HAS_PAGE | REPLIED_TO *]-(children)
+            `MATCH (media:POST | COMMENT | DOCUMENT)
             WHERE ID(media) = $mediaID
+            OPTIONAL MATCH (media)-[:COMMENTED_ON | HAS_PAGE | REPLIED_TO *]-(children)
             DETACH DELETE media, children
             `,
             {
@@ -408,7 +407,11 @@ async function checkAndRemoveReportedMedia(mediaID, sceneName) {
             },
             {database: 'neo4j'}
         )
+
+        return true
     }
+
+    return false
 }
 
 async function userInScene(authID, sceneName) {

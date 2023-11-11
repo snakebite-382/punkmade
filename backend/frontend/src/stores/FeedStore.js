@@ -2,8 +2,7 @@ import { defineStore } from "pinia"
 import { socket } from '@/socket';
 import {API_ROUTE} from '../../api'
 
-const API_URL = API_ROUTE + "feed";
-const TICK_RATE = 375;
+const API_URL = `${API_ROUTE}feed`;
 const logPre = "Feed Data Store: ";
 
 const postBatchSize = 100;
@@ -156,8 +155,7 @@ export const feedStore = defineStore("feed", {
             this.lazyStack = [];
         },
 
-        getComment(parents) {
-            let post = this.getPostById(parseInt(parents[0]));
+        getComment(parents) { let post = this.getPostById(parseInt(parents[0]));
             let target = post.post;
 
             let commentsToCheck = target.comments;
@@ -198,13 +196,13 @@ export const feedStore = defineStore("feed", {
                 await this.initSocket();
             }
 
-            let start = this.libraryDocuments.length
-            let end = start + batchsize
+            const start = this.libraryDocuments.length
+            const end = start + batchsize
 
             if(this.socketAuthed) {
                 log('fetching docs')
                 if(!gradual) {
-                    let results = await socket.emitWithAck('get documents', this.libraryScene, start, end)
+                    const results = await socket.emitWithAck('get documents', this.libraryScene, start, end)
 
                     if(!results) {
                         return;
@@ -214,7 +212,9 @@ export const feedStore = defineStore("feed", {
                         return;
                     }
 
-                    this.libraryDocuments = results;
+                    for(const result of results) {
+                        this.libraryDocuments.push(result)
+                    }  
                 }
             }            
         },
@@ -304,12 +304,12 @@ export const feedStore = defineStore("feed", {
 
         async createDocument(title, pages) {
             this.docPostProgress = async () => {
-                let doc = {
+                const doc = {
                     sceneID: this.libraryScene,
                     title,
                     pages,
                 };
-                const request = await fetch(API_ROUTE + 'feed/create_document/', {
+                const request = await fetch(`${API_ROUTE}feed/create_document/`, {
                     method: "POST",
                     headers: {
                         'Content-Type': "application/json",
@@ -318,13 +318,10 @@ export const feedStore = defineStore("feed", {
                     body: JSON.stringify(doc)
                 })
 
-                let data = await request.json();
-
+                const data = await request.json();
                 if(data) {
-                    this.libraryDocuments.push(data)
+                    await this.fetchDocuments(1); 
                 }
-
-
                 return data;
             }
         },

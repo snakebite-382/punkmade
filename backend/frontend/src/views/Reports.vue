@@ -9,6 +9,7 @@
                 <span class="tw-mr-2">Vote to remove?</span> {{ report.votes }}<vue-feather type="thumbs-up" :size="18" class="tw-mx-2 tw-h-fit tw--mt-2" @click="() => voteToRemove(report.mediaID, i)"/>
             </div>
         </div>
+        <StyledBtn @click="loadReports">Load More</StyledBtn>
     </div>
 </template>
 
@@ -20,6 +21,7 @@ import { converter } from '../../markdown'
 import {API_ROUTE} from '../../api'
 import Seperator from '../components/Reusable/Seperator.vue'
 import PreviewDocument from '../components/Library/PreviewDocument.vue';
+import StyledBtn from '../components/Reusable/StyledBtn.vue'
 
 export default {
     name: "Reports",
@@ -27,15 +29,15 @@ export default {
     data() {
         return {
             reports: [],
-            scene: new URL(window.location).searchParams.get('scene'),
-            converter,
+            scene: new URL(window.location).searchParams.get('scene'), converter,
         }
     },
 
     components: {
-    Seperator,
-    PreviewDocument
-},
+        Seperator,
+        PreviewDocument,
+        StyledBtn,
+    },
 
     computed: {
         ...mapStores(feedStore, toaster)
@@ -51,7 +53,7 @@ export default {
             await this.feedStore.initSocket();
         }
 
-        this.reports = await this.feedStore.fetchReports(this.scene, this.reports.length, this.reports.length + 100);
+        this.reports = await this.feedStore.fetchReports(this.scene, this.reports.length, this.reports.length + 1);
         this.toasterStore.cleanToaster()
     },
 
@@ -73,13 +75,21 @@ export default {
             });
 
             const data = await request.json();
-
+            console.log(data)  
             if(data) {
-                this.reports[i].votes++;
-            }
+                this.reports.splice(i, 1);
+           }
 
             this.toasterStore.cleanToaster()
         },
+        async loadReports() {
+            this.toasterStore.work("Loading More")
+            const results = await this.feedStore.fetchReports(this.scene, this.reports.length, this.reports.length + 1);
+            for(const result of results) {
+                this.reports.push(result)
+            } 
+            this.toasterStore.cleanToaster()
+        }
     }
 }
 </script>

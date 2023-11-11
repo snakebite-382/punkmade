@@ -1,6 +1,9 @@
 <template>
-<div id="toaster">
-    <div id="inner" :class="`tw-text-grey ${toasterStore.show ? `show tw-bg-${toasterStore.status.toLowerCase()}`: toasterStore.status ? `hide tw-bg-${toasterStore.status.toLowerCase()}` : 'hide'}`">
+<div id="toaster" class="tw-absolute tw-mt-4">
+    <div id="inner" 
+        :class="`tw-text-grey 
+           tw-bg-${toasterStore.status || this.toasterStore.lastStatus} ${toasterStore.show ? 'show' : 'hide'}`"
+        >
         <strong>{{ toasterStore.text }}</strong>
     </div>
 
@@ -26,9 +29,8 @@ export default {
 
 <style scoped>
 #toaster {
-    position: absolute;
     bottom: 25px;
-    width: 100vw;
+    width: 100%;
     display: flex;
     flex-direction: row;
     pointer-events: none;
@@ -36,7 +38,7 @@ export default {
 #inner {
     padding: 15px;
     margin: auto;
-    transition: opacity 1s ease;
+    transition: opacity 1s;
 }
 
 .hide {

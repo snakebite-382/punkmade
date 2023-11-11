@@ -14,6 +14,7 @@
 import { locationStore } from '../../stores/LocationStore';
 import { feedStore } from '../../stores/FeedStore';
 import { mapStores } from 'pinia';
+import { toaster } from '../../stores/Toaster'
 import { API_ROUTE } from '../../../api';
 
 export default {
@@ -26,11 +27,12 @@ export default {
     },
 
     computed: {
-        ...mapStores(locationStore, feedStore)
+        ...mapStores(locationStore, feedStore, toaster)
     },
 
     methods: {
         async clickDelete(scene) {
+            this.toasterStore.work("Deleting")
             let sure = confirm('This will remove you from the scene and delete all the content you posted there permantly, are you sure you want to do this?');
             console.log(sure);
             if(sure) {
@@ -56,9 +58,11 @@ export default {
                     }
                 }
             }
+            this.toasterStore.cleanToaster()
         },
 
         async clickPrefer(scene) {
+            this.toasterStore.work("Preferring")
             const token = await this.$auth0.getAccessTokenSilently();
 
             let request = await fetch(API_ROUTE + 'users/prefer_scene', {
@@ -78,6 +82,7 @@ export default {
             if(this.feedStore.initialized) {
                 await this.feedStore.fetchInit()
             }
+            this.toasterStore.cleanToaster();
         }
     },
 

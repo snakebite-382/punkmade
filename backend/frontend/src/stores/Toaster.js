@@ -4,6 +4,7 @@ export const toaster = defineStore("toaster", {
     state: () => {
         return {
             status: null,
+            lastStatus: null,
             show: false,
             text: "",
             wasWorking: false
@@ -11,28 +12,37 @@ export const toaster = defineStore("toaster", {
     },
 
     actions: {
-        popToast(job, isSuccess = false) {
+        popToast(job, isSuccess = false, isCopied = false) {
             this.show = true;
 
             if(isSuccess) {
                 this.status = "success"
+                this.lastStatus = this.status
                 this.text = "Success!"
                 return 
             }
 
-            this.status = job.split(':')[0];
-            this.text = job
+            if(isCopied) {
+                this.status = "success"
+                this.text = "Copied!"
+                return
+            }
+
+            this.status = job.split(':')[0].toLowerCase();
+            this.text = job;
+            this.lastStatus = this.status;
         },
     
-        async cleanToaster() {
+        async cleanToaster(wait = 0) {
+            await new Promise(resolve => setTimeout(resolve, wait))
+
             if(this.wasWorking) {
                 this.popToast("Success", true)
-
                 await new Promise(resolve => setTimeout(resolve, 2 * 1000))
             }
             this.show = false
 
-            setTimeout(() => this.status = null, 2 *1000)
+            this.status = null
         },
 
         work(job) {

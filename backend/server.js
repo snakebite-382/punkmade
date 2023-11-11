@@ -1,4 +1,4 @@
-// imports
+// HEADER: imports
 const express = require('express');
 const dotEnv = require("dotenv");
 const cors = require("cors");
@@ -9,20 +9,20 @@ const RateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 
 // DOTENV
-dotEnv.config({path: __dirname + "/.env"});
+dotEnv.config({path: `${__dirname}/.env`});
 
-// Setup the express app
+// HEADER: Setup the express app
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
-    cors: {
+   cors: {
       origin: process.env.NODE_ENV === "production" ? "https://punkmade.fly.dev/" : "http://localhost:5173",
       methods: ["GET", "POST"],
     }
 });
 
-// Security
-let limiter = RateLimit({
+// HEADER: Security
+const limiter = RateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 100, // max 100 requests per windowMs (100 req/10min, 10 req/min, ~0.16 req/sec)
 });
@@ -31,7 +31,7 @@ let limiter = RateLimit({
 app.use(limiter);
 
 // use helmet to set some recommended security headers
-let NogginProtector = helmet({
+const NogginProtector = helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'", 'https://punkmade.us.auth0.com', 'https://maps.googleapis.com/maps/api/js/', 'https://maps.googleapis.com/$rpc/google.internal.maps.mapsjs.v1.MapsJsInternalService/GetViewportInfo'],
@@ -46,23 +46,20 @@ app.use(NogginProtector);
 const clientOrigins = ["http://localhost:5173", "http://localhost:5000/", "https://punkmade.fly.dev/"];
 app.use(cors({ origin: clientOrigins }));
 
-// runtime constants 
-// prod:
-// const frontendDir = __dirname + "/frontend/dist";
-//test:
-const frontendDir = __dirname + '/frontend/dist';
+// HEADER: runtime constants 
+const frontendDir = `${__dirname}/frontend/dist`;
 const port = 5000;
 
-// form parsing
+// HEADER: form parsing
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Cron Jobs
+// HEADER: Cron Jobs
 const {initJobs} = require('./cronManager.js')
 
 initJobs()
 
-// API
+// HEADER: API
 const APIRouter = express.Router();
 app.use("/api", APIRouter);
 
@@ -75,15 +72,15 @@ APIRouter.use("/feed", FeedRouter);
 const UsersRouter = require('./api/Users/Users.router.js');
 APIRouter.use('/users', UsersRouter);
 
-// static files
+// HEADER: static files
 app.use(express.static(frontendDir));
 
 // redirect all requests to the frontend that aren't api reqs or static files
 app.get('*', (request, response) => {
-    response.sendFile(frontendDir + "/index.html");
+    response.sendFile(`${frontendDir}/index.html`);
 });
 
-// Socket.io
+// HEADER: Socket.io
 const {WebsocketServer} = require('./api/Websockets');
 
 WebsocketServer(io);
@@ -95,7 +92,7 @@ process.on("exit", () => { // close mongo on close
     console.log("CLOSED");
 });
 
-// listen for requests :)
+// HEADER: listen for requests :)
 server.listen(port, () => {
-    console.log('Your app is listening on port ' + port);
-});
+    console.log(`Your app is listening on port ${port}`);
+})

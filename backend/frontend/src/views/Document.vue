@@ -6,8 +6,9 @@
             <div class="content markdown" v-html="converter.render(doc.pages[currentIndex])">
             </div>
             <div class="nav tw-mt-4 tw-flex tw-justify-between">
+                <span @click="copyLink" class="tw-mr-2"><vue-feather type="share" :size="36"/></span>
                 <StyledBtn @click="prev"><vue-feather type="chevron-right" class="tw-rotate-180 tw-p-0.5 tw-mr-1"/></StyledBtn>
-                <StyledBtn v-for="(x, index) of doc.pages" @click="currentIndex = index" class="tw-text-xl tw-w-full tw-mx-1">{{ index }}</StyledBtn>
+                <StyledBtn v-for="(x, index) of doc.pages" @click="currentIndex = index" class="tw-text-xl tw-w-full tw-mx-1">{{ index + 1 }}</StyledBtn>
                 <StyledBtn @click="next"><vue-feather type="chevron-right" class="tw-p-0.5 tw-ml-1"/></StyledBtn>
                 <ReportButton :mediaID="parseInt(docID)" :scene="doc.scene" :iconSize="36" class="tw-ml-2"/>
             </div>
@@ -79,6 +80,12 @@ export default {
                 this.currentIndex++;
             }
         },
+
+        copyLink() {
+            this.toasterStore.popToast("", false, true)
+            navigator.clipboard.writeText(`${window.location.origin}/library/document?docID=${this.docID}`)
+            this.toasterStore.cleanToaster(2 * 1000)
+        }
     }
 }
 </script>

@@ -17,7 +17,7 @@ async function cleanReports() {
 }
 
 function initJobs () {
-    cron.schedule('30 * * * *', () => {
+    cron.schedule('15 * * * *', () => {
         cleanReports()
     });
 } 

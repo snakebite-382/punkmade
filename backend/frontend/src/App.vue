@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import NavBar from './components/NavBar.vue';
+import NavBar from './components/Navs/NavBar.vue';
 import { navRoutes as routes } from './router';
 import AuthButton from './components/AuthButton.vue';
 import StatusToaster from './components/Reusable/StatusToaster.vue';

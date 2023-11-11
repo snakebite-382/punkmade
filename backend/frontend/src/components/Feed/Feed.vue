@@ -7,9 +7,23 @@
                         tw-border-red tw-border-solid tw-border-4
                         tw-h-fit tw-p-4 tw-z-10 
                         tw-w-full lg:tw-w-fit ${showCreatePost ? 'tw-h-full tw-w-full' : ''} 
-                        tw-fixed tw-bg-grey tw-text-sm md:tw-text-lg lg:tw-text-xl`">
-                <SceneNav :scenes="returnNavScenes()" @nav-item-click="sceneNavClick" id="Scene-Nav"/>
-                <CategoryNav :categories="returnNavCategories()" @nav-item-click="categoriesNavClick" id="Category-Nav"/>
+                        tw-fixed tw-bg-grey tw-text-sm md:tw-text-lg lg:tw-text-xl`"
+            >
+
+                <Dropdown 
+                    :items="returnNavScenes()"
+                    @nav-item-click="sceneNavClick"
+                    title="Scenes" 
+                    :active="feedStore.currentScene"
+                />
+
+                <Dropdown
+                    :items="returnNavCategories()"
+                    @nav-items-click="categoriesNavClick"
+                    title="Categories"
+                    :active="feedStore.currentCategory"
+                />
+
                 <router-link :to="`/library?scene=${encodeURIComponent(feedStore.currentScene)}`">Library</router-link>
                 <router-link :to="`/reports?scene=${encodeURIComponent(feedStore.currentScene)}`">Reports</router-link>
                 <div class="creation lg:tw-mt-2">
@@ -36,10 +50,9 @@
 import Posts from './Posts/Posts.vue';
 import FullscreenLoading from '../Loading/Fullscreen.vue';
 import CreatePost from './Posts/CreatePost.vue';
-import CategoryNav from './Navs/CategoryNav.vue';
-import SceneNav from './Navs/SceneNav.vue';
 import StyledBtn from '../Reusable/StyledBtn.vue';
-import Nav from '../Nav.vue';
+import Nav from '../Navs/Nav.vue';
+import Dropdown from "../Navs/Dropdown.vue"
 
 import '../../assets/markdown.scss'
 
@@ -66,10 +79,9 @@ export default {
         Posts,
         FullscreenLoading,
         CreatePost,
-        CategoryNav,
-        SceneNav,
         StyledBtn,
         Nav,
+        Dropdown,
     },
 
     computed: {
