@@ -1,7 +1,7 @@
 const express = require("express");
 const {checkJwt} = require("../checkjwt.js");
 
-const {get_init_feed_data, createPost, likePost, likeComment, createComment, createDocument, getDocument, reportMedia, voteToRemove} = require("./Feed.service.js");
+const {get_init_feed_data, createPost, likePost, likeComment, createComment, createDocument, getDocument, reportMedia, voteToRemove, getPostByID} = require("./Feed.service.js");
 
 const router = express.Router();
 
@@ -25,5 +25,7 @@ router.post('/like_comment/', checkJwt, likeComment);
 router.post('/report_media/', checkJwt, reportMedia);
 
 router.post('/vote_to_remove/', checkJwt, voteToRemove);
+
+router.get('/get_post/:id', checkJwt, getPostByID)
 
 module.exports = router;

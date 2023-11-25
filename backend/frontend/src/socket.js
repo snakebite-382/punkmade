@@ -1,9 +1,14 @@
 import { reactive } from "vue";
 import { io } from "socket.io-client";
 
-export const state = reactive({
-  connected: false,
-//   fooEvents: [],
+export const socketState = reactive({
+    connected: false,
+    fooEvents: [],
+    taskID: NaN,
+    posts: [],
+    comments: [
+
+    ]
 //   barEvents: []
 });
 
@@ -13,20 +18,42 @@ const URL = process.env.NODE_ENV === "production" ? 'https://punkmade.fly.dev' :
 export const socket = io(URL,  { transports: ["websocket"] });
 
 socket.on("connect_error", (err) => {
-  console.log(`connect_error due to ${err.message}`);
+    console.log(`connect_error due to ${err.message}`);
 });
 
 socket.on("connect", () => {
-  state.connected = true;
+    socketState.connected = true;
 });
 
 socket.on("disconnect", () => {
-  state.connected = false;
+    socketState.connected = false;
 });
 
-// socket.on("foo", (...args) => {
-//   state.fooEvents.push(args);
-// });
+socket.on("set taskID", (id) => {
+    socketState.taskID = id;
+});
+
+socket.on("return post", (response) => {
+    if(response.taskID !== socketState.taskID) return;
+    socketState.posts.push(response.post);
+})
+
+socket.on("return comment", (response) => {
+    console.log("GOT A COMMENT")
+    if(!socketState.comments[response.mediaID]) socketState.comments[response.mediaID] = [];
+    socketState.comments[response.mediaID].push(response.comment);
+})
+
+export async function initSocket(token) {
+    socket.connect();
+    console.log("CONN");
+    socketState.socketAuthed = await socket.emitWithAck("auth", token);
+}
+
+socket.on("foo", (...args) => {
+   socketState.fooEvents.push(args);
+    console.log("FOOOOO");
+});
 
 // socket.on("bar", (...args) => {
 //   state.barEvents.push(args);

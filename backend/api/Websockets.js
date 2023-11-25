@@ -1,6 +1,7 @@
 const jose = require('jose');
+const uuid = require("uuid")
 const { dbDriver } = require('./db')
-const { checkAndRemoveReportedMedia } = require('./Feed/Feed.service.js') 
+const { checkAndRemoveReportedMedia, postNodeToPostObject } = require('./Feed/Feed.service.js') 
 const JWKS = jose.createRemoteJWKSet(
     new URL("https://punkmade.us.auth0.com/.well-known/jwks.json")
 );
@@ -18,28 +19,52 @@ function HandleConnection(socket) {
         if(result) {
             socket.data_authenticated = true;
             socket.data_userID = result.sub;
+            console.log("EMITTING")
+            socket.emit("foo", "bar");
 
             callback(true)
+
+            await new Promise(resolve => setTimeout(resolve, 5 * 1000))
         } else {
             callback(false)
         }
     });
 
-    socket.on('get posts', async (scene, category, start, end, callback) => {
+    socket.on('stream posts', async (scene, category, start, end) => {
+        console.log("HIT", scene, category, start, end)
         if(socket.data_authenticated) {
-            const posts = await getPosts(socket.data_userID, scene, category, start, end)
-            callback(posts);
-        } else {
-            callback(false)
-        }
+            const id = uuid.v4();
+
+            socket.emit("set taskID", id);
+
+            for(let i = start; i < end; i++) {
+                console.log("SENDING POST")
+                
+                const response = {
+                    post: (await getPosts(socket.data_userID, scene, category, i, i+1))[0],
+                    taskID: id,
+                }
+
+                if(!response.post) break;  
+
+                socket.emit("return post", response);
+            }
+       }
     });
 
-    socket.on('get comments', async(scene, category, targetID, start, end, callback) => {
+    socket.on('stream comments', async(targetID, start, end) => {
         if(socket.data_authenticated) {
-            const comments = await getComments(socket.data_userID, scene, category, targetID, start, end);
-            callback(comments);
-        } else {
-            callback(false);
+            // const comments = await getComments(socket.data_userID, scene, category, targetID, start, end);
+            for(let i = start; i < end; i++) {
+                const response = {
+                    comment: (await getComments(socket.data_userID, targetID, i, i+1))[0],
+                    mediaID: targetID,
+                }
+
+                if(!response.comment) break;
+
+                socket.emit("return comment", response)
+            }
         }
     });
 
@@ -108,7 +133,8 @@ async function getDocuments(scene, start, end, authID) {
     return documents;
 }
 
-async function getReports(scene, start, end, authID) { const {records: reportRecords} = await dbDriver.executeQuery(
+async function getReports(scene, start, end, authID) { 
+    const {records: reportRecords} = await dbDriver.executeQuery(
         `OPTIONAL MATCH (:USER {authID: $authID})-[:REPORTED | VOTED_TO_REMOVE]-(reported:POST | DOCUMENT | COMMENT)
         WITH COLLECT(reported) as reported
         MATCH (:SCENE {name: $scene})-[:HAS_CATEGORY | POSTED_ON | HAS_DOCUMENT | COMMENTED_ON | REPLIED_TO *]
@@ -172,22 +198,6 @@ async function getReports(scene, start, end, authID) { const {records: reportRec
     return reports
 }
 
-function postNodeToPostObject(post, author) {
-    let id = post.get('postID').toNumber();
-
-    return {
-        content: post.get('content'),
-        type: post.get('type'),
-        timestamp: post.get('timestamp'),
-        author,
-        likes: post.get('likes').toNumber(),
-        liked: post.get('liked').toNumber() === 1 ? true : false,
-        postID: id,
-        commentCount: post.get('commentCount').toNumber(),
-        comments: []
-    }
-}
-
 /**
  * 
  * @param {String} userID authID of the user
@@ -209,8 +219,8 @@ async function getPosts(userID, scene, category, start, end) {
             WHERE NOT(post IN reported)
             OPTIONAL MATCH (:COMMENT)-[commentCount:COMMENTED_ON]->(post)
             OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
-            OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
-            RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user) as user, COUNT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID, COUNT(commentCount) as commentCount
+            OPTIONAL MATCH (originUser)-[userLiked:LIKED]->(post)
+            RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user) as user, COLLECT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID, COLLECT(commentCount) as commentCount
             ORDER BY timestamp DESC
             SKIP toInteger($skip)
             LIMIT toInteger($limit)`,
@@ -223,16 +233,18 @@ async function getPosts(userID, scene, category, start, end) {
             },
             {database: 'neo4j'}
         )
-        let posts = []
+        const posts = []
         
-        for(let post of postRecords) {
-            let authorNode = post.get("user")
-            let author = {
+        for(const post of postRecords) {
+            const authorNode = post.get("user")
+            const author = {
                 name: authorNode[0].properties.name,
                 userID: authorNode[0].properties.authID
             }
-    
-            posts.push(postNodeToPostObject(post, author))
+
+            const postObj = postNodeToPostObject(post, author)
+            console.log(postObj.likes) 
+            posts.push(postObj)
         }
             
         return posts;   
@@ -268,26 +280,24 @@ function commentNodeToCommentObject(comment) {
     }
 }
 
-async function getComments(userID, scene, category, targetID, start, end) {
+async function getComments(userID,targetID, start, end) {
     if(dbDriver) {
         const {records: commentRecords} = await dbDriver.executeQuery(
             `
             MATCH (comment:COMMENT)-[:COMMENTED_ON | REPLIED_TO ]
             ->(target)-[:POSTED_ON | REPLIED_TO | COMMENTED_ON *]
-            ->(:CATEGORY {name: $categoryName})<-[:HAS_CATEGORY]
-            -(:SCENE {name: $sceneName})
+            ->(:CATEGORY)<-[:HAS_CATEGORY]
+            -(:SCENE)<-[:PART_OF]-(user:USER {authID: $userID})
             WHERE id(target) = toInteger($targetID)
             MATCH (author:USER)-[:COMMENTED]->(comment)
             OPTIONAL MATCH (:USER)-[like:LIKED]->(comment)
-            OPTIONAL MATCH (user:USER {authID: $userID})-[userLiked:LIKED]->(comment)
+            OPTIONAL MATCH (user)-[userLiked:LIKED]->(comment)
             RETURN comment.content as content, comment.timestamp as timestamp, id(comment) as commentID, COLLECT(author) as author, COUNT(like) as likes, COUNT(userLiked) as liked
             ORDER BY timestamp ASC
             SKIP toInteger($skip)
             LIMIT toInteger($limit)
             `,
             {
-                categoryName: category,
-                sceneName: scene,
                 targetID: parseInt(targetID),
                 userID: userID,
                 skip: parseInt(start),
@@ -298,9 +308,9 @@ async function getComments(userID, scene, category, targetID, start, end) {
             }
         )
 
-        let comments = []
+        const comments = []
 
-        for(let comment of commentRecords) {
+        for(const comment of commentRecords) {
             comments.push(commentNodeToCommentObject(comment))
         }
 

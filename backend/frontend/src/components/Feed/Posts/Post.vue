@@ -1,8 +1,6 @@
 <template>
     <div class="post thin-border tw-p-3 tw-my-2 tw-max-w-[75vw] tw-w-fit">
-        <router-link :to="`/profile?user=${post.author.userID}`" class="creator tw-text-xl tw-text-center">
-            {{ post.author.name }}
-        </router-link>
+        <UserLink :authID="post.author.userID" :name="post.author.name"/> 
         <Seperator class="tw-w-full tw-my-1"/>
         <h3 class="content tw-text-lg">
             <div class="markdown" v-html="converter.render(post.content)">
@@ -16,8 +14,8 @@
                 {{ post.likes }} <LikeButton :fill="post.liked ? 'red' : 'none'" @post-liked="$emit('post-liked')"/> 
                 <span v-if="post.comments" class="tw-mx-2">
                     {{ Math.max(post.comments.length, post.commentCount) }} <CommentButton fill="none" @toggle-comments="toggleComments"/> 
-                </span>
-                <ReportButton :mediaID="post.postID" :scene="feedStore.currentScene" @reported="feedStore.removePost(post.postID)"/>
+                </span> <!--
+<ReportButton :mediaID="post.postID" :scene="feedStore.currentScene" @reported="feedStore.removePost(post.postID)"/> -->
             </h4>
             <CommentSection v-if="commentsOpen" :comments="post.comments" :postID="post.postID.toString()"/> 
         </div>
@@ -31,18 +29,12 @@ import CommentButton from '../Comments/CommentButton.vue';
 import CommentSection from '../Comments/CommentSection.vue';
 import Seperator from '../../Reusable/Seperator.vue';
 import ReportButton from '../Buttons/ReportButton.vue';
+import UserLink from "../../User/UserLink.vue"
 
 import { converter } from '../../../../markdown';
 
-import { feedStore } from '../../../stores/FeedStore';
-import { mapStores } from 'pinia';
-
 export default {
     name: 'Post',
-
-    computed: {
-        ...mapStores(feedStore)
-    },
 
     data() {
         return {
@@ -60,19 +52,21 @@ export default {
         CommentButton,
         CommentSection,
         Seperator,
-        ReportButton
+        ReportButton,
+        UserLink,
     },
 
     methods: {
         toggleComments() {
             this.commentsOpen = !this.commentsOpen
-            if(this.commentsOpen) {
-                this.feedStore.setupCommentParents(this.post.postID.toString(), [])
-            }
         }
     },
 
     emits: ['post-liked'],
+
+    async created() {
+
+    }
 }
 </script>
 

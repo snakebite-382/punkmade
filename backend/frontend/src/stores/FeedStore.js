@@ -23,12 +23,8 @@ export const feedStore = defineStore("feed", {
             currentScene: '', 
             currentCategory: "",
             token: '',
-            user: {},
             initialized: false,
             newCommentParents: [''],
-            status: null,
-            toasting: false,
-            socketAuthed: false,
             posting: false,
             morePostsToLoad: false,
             lazyStack: [],
@@ -39,54 +35,6 @@ export const feedStore = defineStore("feed", {
     },
 
     actions: {
-        throwError(error) {
-            logError(error);
-        },
-
-        async setToken (tokenFn) { //very simple, just await the token function and set it as the token
-            this.token = await tokenFn()
-            log("Token set")
-        },
-
-        async initSocket() {
-            socket.connect()
-
-            this.socketAuthed = await socket.emitWithAck('auth', this.token);
-        },
-
-        async fetchInit() {
-            log('Fetching initial data')
-
-            const userInfo = await fetch(API_ROUTE + "users/userinfo", {
-                headers: {
-                    "Authorization": `Bearer ${this.token}`
-                }
-            })
-
-            this.user = await userInfo.json()
-
-            // store the user and request the initial data for the feed
-            const response = await fetch(`${API_URL}/get_feed_init_data/`, {
-                headers: {
-                    "Authorization": `Bearer ${this.token}`
-                }
-            })
-            const data = await response.json();
-
-            if(!this.socketAuthed) {
-                await this.initSocket();
-            }
-
-            // gives you the preferred scene and scenes
-            this.preferredScene = data.preferredScene
-            this.scenes = data.scenes;
-            
-            await this.switchScene(this.preferredScene, true)
-
-            log("Successfully initialized data")
-            return 'done'
-        },
-
         loadMorePosts() {
             log("Loading more posts")
             let extraToFetch = postBatchSize - this.lazyStack.length;
@@ -155,7 +103,8 @@ export const feedStore = defineStore("feed", {
             this.lazyStack = [];
         },
 
-        getComment(parents) { let post = this.getPostById(parseInt(parents[0]));
+        getComment(parents) {
+            const post = this.getPostById(parseInt(parents[0]));
             let target = post.post;
 
             let commentsToCheck = target.comments;
@@ -219,12 +168,12 @@ export const feedStore = defineStore("feed", {
             }            
         },
 
-        async fetchComments(parents, batchsize, gradual) {
+        async fetchComments(parents, batchsize, gradual, targ = undefined) {
             log(`Fetching ${batchsize} comments on target of id ${parents[parents.length -1]} with gradual=${gradual}`)
 
-            let target = this.getComment(parents);
+            const target = targ || this.getComment(parents);
 
-            let commentsToCheck = target.replies || target.comments;
+            const commentsToCheck = target.replies || target.comments;
 
             const start = commentsToCheck.length;
             const end = start + batchsize;
@@ -234,7 +183,7 @@ export const feedStore = defineStore("feed", {
                     let run = true;
                     for(let i = start; i < end; i++) {
                         if(!run) break;
-                        let result = await socket.emitWithAck('get comments', this.currentScene, this.currentCategory, parents[parents.length - 1], i, i+1)
+                        const result = await socket.emitWithAck('get comments', parents[parents.length - 1], i, i+1)
                         if(result.length > 0) {
                             commentsToCheck.push(result[0]);
                         } else {
@@ -242,13 +191,13 @@ export const feedStore = defineStore("feed", {
                         }
                     }
                 } else {
-                    const results = await socket.emitWithAck('get comments', this.currentScene, this.currentCategory, parents[parents.length - 1], start, end)
+                    const results = await socket.emitWithAck('get comments', parents[parents.length - 1], start, end)
                 
                     for(let i = 0; i < results.length; i++) {
                         commentsToCheck.push(results[i])
                     }
                 }
-                
+                return commentsToCheck; 
             } else {
                 this.throwError("Socket not authenticated")
             }
@@ -461,48 +410,6 @@ export const feedStore = defineStore("feed", {
             }
         },
 
-        initCategories(scene) {
-            // just goes through the categories and converts it from a list of names to a name posts pair
-            log("Initializing categories for scene: " + scene)
-            let categories = []
-            let target = this.getScene(scene)
-
-            if(typeof target.categories[0] == 'string') {
-                for(let i = 0; i < target.categories.length; i++) {
-                    categories.push({
-                        name: (target.categories[i]).toLowerCase(),
-                        posts: []
-                    })
-                }
-    
-                target.categories = categories;
-            }
-        },
-
-        async switchCategory(categoryName, asynchronous = false) {
-            log("Switching to category " + categoryName)
-            this.currentCategory = categoryName;
-
-            if(asynchronous) {
-                this.fetchPosts(postBatchSize, false, true)
-            } else {
-                await this.fetchPosts(postBatchSize)
-            }
-
-            this.fetchPosts(postBatchSize, true)
-        },
-
-        async switchScene(name, asynchronous = false) {
-            log("Switching to scene " + name);
-
-            this.currentScene = name;
-
-            this.initCategories(this.currentScene);
-
-            await this.switchCategory('general', asynchronous);
-            log("Successfully switched scenes")
-        },
-
         setupCommentParents(postID = this.newCommentParents[0], parents = this.newCommentParents.slice(1)) {
             let newParents = [postID].concat(parents)
             log("Setting up comment parents " + JSON.stringify(newParents))
@@ -524,7 +431,7 @@ export const feedStore = defineStore("feed", {
         },
 
         getCategory(name) { // gets category by name
-            let categories = this.getScene(this.currentScene).categories;
+            const categories = this.getScene(this.currentScene).categories;
             for(let i= 0; i < categories.length; i++) {
                 if(categories[i].name.localeCompare(name) === 0) {
                     return categories[i]

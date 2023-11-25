@@ -11,7 +11,7 @@ async function cleanReports() {
         {database: 'neo4j'}
     )
 
-    for(let report of allReports) {
+    for(const report of allReports) {
         checkAndRemoveReportedMedia(report.get('mediaID'), report.get('scene'))
     }
 }

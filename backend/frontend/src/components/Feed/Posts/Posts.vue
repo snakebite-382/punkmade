@@ -1,40 +1,44 @@
 <template>
-    <div id="Posts" v-if="feedStore.getPosts()" class="tw-flex tw-items-center tw-flex-col tw-w-full tw-mt-6">
-        <div class="post-container" :key="post.id" v-for="(post, index) in feedStore.getPosts()">
+    <div id="Posts"  class="tw-flex tw-items-center tw-flex-col tw-w-full tw-mt-6">
+        <div class="post-container" :key="post.id" v-for="(post, index) in category.posts">
             <Post :post="post" @post-liked="() => likePost(index)"/>
         </div>
-        <button @click="loadMore" v-if="feedStore.morePostsToLoad">Load More Posts</button>
     </div>
 </template>
 
 <script>
-import { feedStore } from '../../../stores/FeedStore';
-import {toaster} from '../../../stores/Toaster'
-import { mapStores } from 'pinia';
 import Post from './Post.vue';
+import {socket, socketState} from "../../../socket.js";
 
 export default {
     name: "Posts",
+
+    props: {
+        category: Object,
+    },
 
     components: {
         Post,
     },
 
-    computed: {
-        ...mapStores(feedStore, toaster)
+    data() {
+        return {
+            test: {}
+        }  
     },
 
-    methods: {
-        async likePost(postIndex) {
-            this.toasterStore.work('Liking')
-            await this.feedStore.likePost(postIndex)
-            this.toasterStore.cleanToaster()
-        },
-
-        loadMore() {
-            this.feedStore.loadMorePosts();
+    async created() {
+        console.log(this.category.posts.length);
+        for(let i = 0; i < this.category.posts.length; i++) {
+            const post = this.category.posts[i];
+            socket.emit("stream comments", post.postID, post.comments.length, post.comments.length + 100);
+            socketState.comments[post.postID] = []; 
+            this.test = socketState;
+            console.log("POST", post.postID)
+            post.comments = socketState.comments[post.postID];
         }
-    },
+    }
+
 }
 
 </script>

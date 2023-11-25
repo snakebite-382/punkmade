@@ -11,5 +11,6 @@
 }
 
 i.vue-feather {
-    @apply tw--mb-1.5
+    @apply tw--mb-1.5;
+    cursor: pointer;
 }

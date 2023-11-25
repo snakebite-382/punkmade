@@ -21,6 +21,9 @@ import StyledInput from '../../Reusable/StyledInput.vue';
 import StyledBtn from '../../Reusable/StyledBtn.vue';
 import { converter } from '../../../../markdown';
 
+const defaultPost = `# Hello\n## My Dears\n1) OL
+* UL\n\n[I'm an inline-style link](https://www.google.com)\n\`code\`\n| Tables        | Are           | Cool |\n| ------------- |:-------------:| -----:|\n| col 3 is      | right-aligned | $1600 |\n| col 2 is      | centered      |   $12 |\n| zebra stripes | are neat      |    $1 |\n> Blockquotes are very handy in email to emulate reply text\n.> This line is part of the same quote.\n---`
+
 export default {
     name: 'CreatePost',
 
@@ -31,13 +34,7 @@ export default {
 
     data() {
         return {
-            content: `# Hello\n## My Dears\n1) OL
-* UL\n\n[I'm an inline-style link](https://www.google.com)\n\`code\`\n| Tables        | Are           | Cool |\n
-| ------------- |:-------------:| -----:|
-| col 3 is      | right-aligned | $1600 |
-| col 2 is      | centered      |   $12 |
-| zebra stripes | are neat      |    $1 |\n> Blockquotes are very handy in email to emulate reply text\n.> This line is part of the same quote.\n---
-`,
+            content: defaultPost,
             converter
         }
     },
@@ -58,7 +55,7 @@ export default {
                 type: 'text',
             }
 
-            this.content = "" // reset input
+            this.content = defaultPost// reset input
 
             // send that to the backend via the store which will destructure and send it
             await this.feedStore.createPost(newPost);

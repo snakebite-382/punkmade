@@ -1,8 +1,8 @@
 const {dbDriver} = require('../db.js')
 
 async function get_init_feed_data(req, res) {
-    let userID = req.auth.payload.sub
-
+    const userID = req.auth.payload.sub
+ 
     // send it
     const {records : prefSceneRels} = await dbDriver.executeQuery(
         'MATCH (:USER {authID: $authID})-[:PREFERRED_SCENE]->(scene:SCENE) RETURN scene.name as preferredScene',
@@ -12,7 +12,7 @@ async function get_init_feed_data(req, res) {
         {database: 'neo4j'}
     )
 
-    let preferredScene = prefSceneRels[0].get('preferredScene');
+    const preferredScene = prefSceneRels[0].get('preferredScene');
 
     const {records: sceneRecords} = await dbDriver.executeQuery(
         `MATCH (:USER {authID: $authID})-[:PART_OF]->(scene:SCENE)-[:HAS_CATEGORY]->(category:CATEGORY) 
@@ -23,19 +23,19 @@ async function get_init_feed_data(req, res) {
         {database: 'neo4j'}
     )
 
-    let scenes = [];
+    const scenes = [];
 
-    sceneRecords.forEach(scene => {
-        let categoryNodes = scene.get('COLLECT(category)');
+    for(const scene of sceneRecords){
+        const categoryNodes = scene.get('COLLECT(category)');
 
-        let categories = [];
+        const categories = [];
 
-        categoryNodes.forEach(cat => {
+        for(const cat of categoryNodes){
             categories.push({
                 name: cat.properties.name,
                 posts: []
             })
-        })
+        }
 
         scenes.push({
             name: scene.get('name'),
@@ -44,9 +44,9 @@ async function get_init_feed_data(req, res) {
             categories,
         })
         
-    })
+    }
 
-    let data = {
+    const data = {
         preferredScene,
         scenes,
     }
@@ -58,8 +58,8 @@ async function createPost(req, res) {
     const formData = req.body;
     // const newPost = new Post(formData.creator, formData.content, formData.type) // create a new post
 
-    let userID = req.auth.payload.sub
-    let supportedTypes = ['text'];
+    const userID = req.auth.payload.sub
+    const supportedTypes = ['text'];
 
 
     if(supportedTypes.indexOf(formData.type) !== -1 && formData.content.length <= 500 && typeof formData.content === 'string') {
@@ -88,10 +88,10 @@ async function createPost(req, res) {
 }
 
 async function likePost(req, res) {
-    let formData = req.body;
-    let userID = req.auth.payload.sub;
+    const formData = req.body;
+    const userID = req.auth.payload.sub;
 
-    let {records: likedRecords} = await dbDriver.executeQuery(
+    const {records: likedRecords} = await dbDriver.executeQuery(
         `
         MATCH (post:POST)
         WHERE ID(post) = $postID
@@ -105,19 +105,20 @@ async function likePost(req, res) {
         {database: 'neo4j'}
     )
 
-    let alreadyLiked = likedRecords[0].get('userLiked').toNumber() === 1 ? true : false;
+    const alreadyLiked = likedRecords[0].get('userLiked').toNumber() === 1 ? true : false;
 
-    let createQuery = `CREATE (user)-[:LIKED]->(post)`
+    const createQuery = "CREATE (user)-[:LIKED]->(post)"
 
-    let deleteQuery = `DELETE like`
+    const deleteQuery = "DELETE like"
 
-    let {records: postRecords} = await dbDriver.executeQuery(
+    await dbDriver.executeQuery(
         `MATCH (post:POST)
         WHERE ID(post) = $postID
         MATCH (user:USER {authID: $authID})
         OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
         OPTIONAL MATCH (user)-[userLiked:LIKED]->(post)
         ${!alreadyLiked ? createQuery : deleteQuery}
+RETURN *
         `,
         {
             authID: userID,
@@ -428,6 +429,74 @@ async function userInScene(authID, sceneName) {
     return existsRecords.length > 0
 }
 
+async function getPostByID(req, res){
+    const userID = req.auth.payload.sub;
+
+    const {records: postRecords} = await dbDriver.executeQuery(
+        `MATCH (originUser:USER {authID: $authID})-[:PART_OF]->(:SCENE)-[:HAS_CATEGORY]->(:CATEGORY)<-[:POSTED_ON]-(post:POST)<-[:POSTED]-(user:USER)
+        WHERE ID(post) = $postID
+        OPTIONAL MATCH (:COMMENT)-[commentCount:COMMENTED_ON]->(post)
+        OPTIONAL MATCH (:USER)-[like:LIKED]->(post)
+        OPTIONAL MATCH (originUser)-[userLiked:LIKED]->(post)
+        RETURN post.content as content, post.type as type, post.timestamp as timestamp, COLLECT(user) as user, COLLECT(like) as likes, COUNT(userLiked) as liked, ID(post) as postID, COLLECT(commentCount) as commentCount
+        `,
+        {
+            authID: userID,
+            postID: parseInt(req.params.id)
+        },
+        {database: 'neo4j'}
+    )
+
+    if(postRecords.length > 0) {
+        const author = {
+            name: postRecords[0].get("user")[0].properties.name, 
+            userID: postRecords[0].get("user")[0].properties.authID
+        };
+        const post = postNodeToPostObject(postRecords[0], author);
+        res.send(post);
+        return;
+    }
+
+    res.send(false)
+}
+
+function postNodeToPostObject(post, author) {
+    const id = post.get('postID').toNumber();
+    const likes = post.get('likes');
+    let numLikes = 0;
+    const processedLikeIDs = [];
+
+    const comments = post.get("commentCount");
+    let numComments = 0;
+    const proccessedCommentIDS = [];
+    
+    for(const like of likes) {
+        if(processedLikeIDs.indexOf(like.identity.toNumber()) === -1) {
+            processedLikeIDs.push(like.identity.toNumber());
+            numLikes++;
+        }  
+    }
+
+    for(const comment of comments) {
+        if(proccessedCommentIDS.indexOf(comment.identity.toNumber()) === -1) {
+            proccessedCommentIDS.push(comment.identity.toNumber());
+            numComments++;
+        }
+    }
+    
+    return {
+        content: post.get('content'),
+        type: post.get('type'),
+        timestamp: post.get('timestamp'),
+        author,
+        likes: numLikes,
+        liked: post.get('liked').toNumber() > 0 ? true : false,
+        postID: id,
+        commentCount: numComments,
+        comments: []
+    }
+}
+
 module.exports = {
     get_init_feed_data,
     createPost,
@@ -439,4 +508,6 @@ module.exports = {
     reportMedia,
     voteToRemove,
     checkAndRemoveReportedMedia,
+    getPostByID,
+    postNodeToPostObject,
 }

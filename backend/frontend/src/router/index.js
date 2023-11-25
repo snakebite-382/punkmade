@@ -10,55 +10,55 @@ import Profile from '../views/Profile.vue';
 import Report from '../views/Reports.vue';
 
 export const routes = [
-  {
-    path: '/',
-    name: 'home',
-    component: HomeView
-  },
-  {
-    path: '/scenes/',
-    name: 'scene-manager',
-    component: SceneManager,
-    beforeEnter: authGuard
-  },
-  {
-    path:'/login-callback',
-    name: 'login-callback',
-    component: LoginCallback,
-    beforeEnter: authGuard
-  },
-  {
-    path: '/library',
-    name: 'Library',
-    component: Library,
-    beforeEnter: authGuard,
-  },
-  {
-    path: '/library/document',
-    name: 'Document',
-    component: Document
-  },
-  {
-    path: '/onboard',
-    name: 'Onboard',
-    component: Onboard,
-    beforeEnter: authGuard,
-  },
-  {
-    path: '/profile',
-    name: "Profile",
-    component: Profile,
-    beforeEnter: authGuard,
-  },
-  {
-    path: '/reports',
-    name: "Reports",
-    component: Report,
-    beforeEnter: authGuard
-  }
+    {
+        path: '/',
+        name: 'home',
+        component: HomeView
+    },
+    {
+        path: '/scenes/',
+        name: 'scene-manager',
+        component: SceneManager,
+        beforeEnter: authGuard
+    },
+    {
+        path:'/login-callback',
+        name: 'login-callback',
+        component: LoginCallback,
+        beforeEnter: authGuard
+    },
+    {
+        path: '/library',
+        name: 'Library',
+        component: Library,
+        beforeEnter: authGuard,
+    },
+    {
+        path: '/library/document',
+        name: 'Document',
+        component: Document
+    },
+    {
+        path: '/onboard',
+        name: 'Onboard',
+        component: Onboard,
+        beforeEnter: authGuard,
+    },
+    {
+        path: '/profile',
+        name: "Profile",
+        component: Profile,
+        beforeEnter: authGuard,
+    },
+    {
+        path: '/reports',
+        name: "Reports",
+        component: Report,
+        beforeEnter: authGuard
+    },
 ]
 
-let navRoutes = [
+const navRoutes = [
   {
     path: '/',
     name: 'Home'

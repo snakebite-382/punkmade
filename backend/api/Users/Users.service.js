@@ -1,4 +1,3 @@
-const axios = require('axios');
 const auth0Manager = require('../managementAPI.js');
 const {checkSceneExists} = require('../Scenes/Scenes.service.js');
 const {dbDriver} = require('../db.js')
@@ -14,7 +13,7 @@ async function loggedin(req, res) {
     const auth0User = await auth0Manager.getUser({id: userID})
     
     const onboarded = auth0User.hasOwnProperty('app_metadata')
-
+    
     if(!onboarded) {
         await dbDriver.executeQuery(
             `CREATE (user:USER {name: $name, authID: $authID})
@@ -30,7 +29,6 @@ async function loggedin(req, res) {
 }
 
 async function doneOnboarding(req, res) {
-    console.log("HIT")
     userID = req.auth.payload.sub;
     await auth0Manager.updateAppMetadata({id: userID}, {onboarded: true})
     res.send(true) 
@@ -50,7 +48,7 @@ async function userinfo (req, res) {
     const { records } = await dbDriver.executeQuery(
         `
         MATCH (user:USER {authID: $authID})
-        RETURN user.name as nickname
+        RETURN user.name as nickname, user.bio as bio, user.pronouns as pronouns
         `,
         {
             authID: userID
@@ -58,8 +56,10 @@ async function userinfo (req, res) {
         {database: 'neo4j'}
     )
 
-    let user = {
-        nickname: records[0].get('nickname')
+    const user = {
+        nickname: records[0].get('nickname'),
+        bio: records[0].get("bio"),
+        pronouns: records[0].get("pronouns")
     }
 
     res.send(user)
@@ -286,14 +286,13 @@ async function getNotifs(req, res) {
         `MATCH (:USER {authID: $authID})-[:POSTED | COMMENTED]->(media:POST | COMMENT | DOCUMENT)
         <-[like:LIKED]-(user:USER)
         WHERE like.seen IS null  
-        RETURN media.content as content, media.title as title, user.name as origin, ID(like) as mediaID
+        RETURN media.content as content, media.title as title, user.name as origin, ID(like) as mediaID, user.authID as originID
         `,
         {
             authID: userID,
         },
         {database: 'neo4j'}
     );
-    console.log(likeNotifRecords)
     const notifs = []
 
     for(const likeNotif of likeNotifRecords) {
@@ -301,7 +300,8 @@ async function getNotifs(req, res) {
             title: likeNotif.get("content") || likeNotif.get("title"),
             origin: likeNotif.get("origin"),
             type: "like",
-            mediaID: likeNotif.get("mediaID").toNumber()
+            mediaID: likeNotif.get("mediaID").toNumber(),
+            originID: likeNotif.get("originID")
         }) 
     }
 
@@ -309,14 +309,13 @@ async function getNotifs(req, res) {
         `MATCH (:USER {authID: $authID})-[:POSTED | COMMENTED]->(media:POST | COMMENT)
         <-[reply:COMMENTED_ON | REPLIED_TO]-(r:COMMENT)<-[:COMMENTED]-(origin:USER)
         WHERE reply.seen IS null
-        RETURN media.content as content, origin.name as origin, ID(reply) as mediaID, r.content as reply
+        RETURN media.content as content, origin.name as origin, ID(reply) as mediaID, r.content as reply, origin.authID as originID
         `,
         {
             authID: userID,
         },
         {database: 'neo4j'}
     );
-    console.log(replyNotifRecords)
     for(const replyNotif of replyNotifRecords) {
         notifs.push({
             title: replyNotif.get("content"),
@@ -324,6 +323,7 @@ async function getNotifs(req, res) {
             type: "reply",
             mediaID: replyNotif.get("mediaID").toNumber(),
             reply: replyNotif.get("reply"),
+            originID: replyNotif.get("originID")
         })
     };
 
@@ -333,8 +333,6 @@ async function getNotifs(req, res) {
 async function dismissNotif(req, res) {
     const userID = req.auth.payload.sub;
     const formData = req.body;
-
-    console.log(req.body.id, userID)
 
     const {records: successRecords} = await dbDriver.executeQuery(
         `MATCH (:USER {authID: $authID})-[:POSTED | COMMENTED]->
@@ -348,7 +346,6 @@ async function dismissNotif(req, res) {
         },
         {database: 'neo4j'}
     )
-    console.log(successRecords)
     res.send(successRecords.length > 0)
 }
 
