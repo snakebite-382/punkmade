@@ -1,0 +1,12 @@
+<h1>Feed</h1>
+
+<div class="scenes">
+  <h2>Scenes: </h2>
+<h3><.link navigate="/scenes">manage scenes</.link></h3>
+  <%= for scene <- @users_scenes do %>
+    <%= scene %>
+  <% end %>
+  <%= if @users_scenes == [] do %>
+    You are not in any scenes
+  <% end %>
+</div>

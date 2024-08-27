@@ -1,0 +1,46 @@
+<h1>
+  <%= if @is_me do %>
+    <.simple_form 
+      for={@username_form}
+    class="flex items-center"
+    >
+      <.input field={@username_form[:username]} type="text"/>'s profile (that's you!)
+    </.simple_form>
+    <% else %>
+    <%= @user.username %>'s profile
+  <% end %> profile 
+</h1><br>
+<%= if @new_user do %>
+  <h2>Welcome to Punkmade! <br> Take a minute to setup your profile.</h2>
+<% end %>
+
+<br>
+
+<h3>Bio: 
+  <%= if @is_me do %>
+    <.simple_form for={@bio_form}>
+      <.input field={@bio_form[:bio]}/>
+    </.simple_form>
+  <% else %>
+    <%= @user.bio %>
+  <% end %>
+</h3>
+<h3>
+  Pronouns:
+  <%= @user.pronoun_subjective %>
+  /<%= @user.pronoun_objective %>
+  /<%= @user.pronoun_possesive%>
+</h3> <br>
+
+<h3>
+  OAuth Providers:
+
+  <%= if @new_oauth do %>
+    A new provider, <%= @new_oauth %>, has been added!
+  <% end %>
+  <ul>
+    <%= for provider <- @oauth_users do%>
+      <li><%= provider.provider %></li>
+    <% end %>
+  </ul>
+</h3>

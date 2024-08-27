@@ -1,0 +1,13 @@
+{
+  "name": "punkmade",
+  "version": "1.0.0",
+  "description": "To start your Phoenix server:",
+  "directories": {},
+  "scripts": {},
+  "author": "Caelin Limerick",
+  "license": "ISC",
+  "devDependencies": {
+    "eslint": "^9.9.0",
+    "globals": "^15.9.0"
+  }
+}

@@ -1,0 +1,14 @@
+<h1>Your Scenes</h1>
+
+<div class="my-scenes">
+  <%= for scene <- @my_scenes do %>
+    <%= scene %>
+  <% end %>
+  <%= if @my_scenes == [] do %>
+    you are not in any scenes
+  <% end %>
+</div>
+
+<div class="create_scene">
+  <.simple_form></.simple_form>
+</div>
