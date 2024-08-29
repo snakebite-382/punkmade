@@ -139,7 +139,6 @@ defmodule PunkmadeWeb.UserAuth do
       socket
       |> Phoenix.Component.assign(:my_user, Map.get(session, "my_user"))
       |> Phoenix.Component.assign(:authed, Map.get(session, "authed"))
-      |> IO.inspect(label: "Socket")
 
     {:cont, socket}
   end

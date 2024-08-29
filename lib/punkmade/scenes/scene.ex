@@ -13,7 +13,7 @@ defmodule Punkmade.Scenes.Scene do
   def create(scene, attrs) do
     scene
     |> cast(attrs, [:name, :city_id, :mascot_url])
-    |> validate_required([:name, :city_id, :mascot_url])
+    |> validate_required([:name, :city_id])
     |> unsafe_validate_unique([:name, :city_id], Punkmade.Repo)
     |> unique_constraint([:name, :city_id])
   end

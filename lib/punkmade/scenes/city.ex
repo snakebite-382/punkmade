@@ -25,12 +25,13 @@ defmodule Punkmade.Scenes.City do
       end
 
     if is_nil(city) do
-      add_error(changeset, :city, "NO CITY")
+      add_error(changeset, :name, "NO CITY")
     else
       if city_exists?(city, state) do
+        IO.puts("CITY EXISTS")
         changeset
       else
-        add_error(changeset, :city, "City does not exist")
+        add_error(changeset, :name, "City does not exist")
       end
     end
   end
@@ -49,7 +50,6 @@ defmodule Punkmade.Scenes.City do
   def parse_response(body, city) do
     case Jason.decode(body) do
       {:ok, %{"results" => results}} when length(results) != [] ->
-        IO.inspect(results)
         result = Enum.at(results, 0)
         types = Map.get(result, "types")
 

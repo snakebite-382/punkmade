@@ -63,7 +63,8 @@ defmodule Punkmade.MixProject do
       {:bcrypt_elixir, "~> 3.0"},
       {:oauth2, "~> 2.0"},
       {:hackney, "~> 1.18"},
-      {:jose, "~> 1.11"}
+      {:jose, "~> 1.11"},
+      {:elasticsearch, "~> 1.0.0"}
     ]
   end
 

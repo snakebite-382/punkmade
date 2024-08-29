@@ -8,7 +8,21 @@
     you are not in any scenes
   <% end %>
 </div>
-
+<br>
 <div class="create_scene">
-  <.simple_form></.simple_form>
+  <.simple_form 
+    for={@scene_form} 
+    phx-change="validate_scene"
+    phx-submit="create_scene"
+  >
+    <label for="state_name">State: </label>
+    <.input field={@scene_form[:state_name]} />
+    <label for="city_name">City: </label>
+    <.input field={@scene_form[:city_name]} />
+    <label for="scene_name">Scene Name: </label>
+    <.input field={@scene_form[:scene_name]} />
+    <:actions>
+      <.button phx-disable-with="Changing...">Create</.button>
+    </:actions>
+  </.simple_form>
 </div>
