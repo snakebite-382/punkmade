@@ -1,7 +1,8 @@
-defmodule Punkmade.ElasticsearchStore do
+defmodule Punkmade.ElasticseachStore do
   @behaviour Elasticsearch.Store
 
   import Ecto.Query
+
   alias Punkmade.Repo
 
   @impl true
@@ -10,9 +11,8 @@ defmodule Punkmade.ElasticsearchStore do
   end
 
   @impl true
-  def transaction(fun) do
-    {:ok, result} = Repo.transaction(fun, timeout: :infinity)
+  def transaction(func) do
+    {:ok, result} = Repo.transaction(func, timeout: :infinity)
     result
   end
 end
-

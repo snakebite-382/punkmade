@@ -14,7 +14,6 @@ defmodule PunkmadeWeb.Telemetry do
       {:telemetry_poller, measurements: periodic_measurements(), period: 10_000},
       # Add reporters as children of your supervision tree.
       # {Telemetry.Metrics.ConsoleReporter, metrics: metrics()}
-      Punkmade.Elasticsearch.Client
     ]
 
     Supervisor.init(children, strategy: :one_for_one)

@@ -17,7 +17,8 @@ defmodule Punkmade.Application do
       # Start a worker by calling: Punkmade.Worker.start_link(arg)
       # {Punkmade.Worker, arg},
       # Start to serve requests, typically the last entry
-      PunkmadeWeb.Endpoint
+      PunkmadeWeb.Endpoint,
+      Punkmade.ElasticsearchCluster
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

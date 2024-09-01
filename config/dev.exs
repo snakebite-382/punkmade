@@ -16,6 +16,16 @@ config :punkmade, Punkmade.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
+
+config :punkmade, Punkmade.ElasticsearchCluster,
+  url: "http://localhost:9200",
+  json_library: Jason,
+  api: Elasticsearch.API.HTTP,
+  scenes: %{
+    store: Punkmade.ElasticseachStore,
+    sources: [Punkmade.Scenes.Scene]
+  }
+
 config :punkmade, PunkmadeWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
