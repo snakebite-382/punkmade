@@ -12,10 +12,13 @@ defmodule PunkmadeWeb.ScenesLive do
   def mount(_params, _session, socket) do
     users_scenes = Scenes.get_users_scenes(socket.assigns.my_user.id)
 
+    IO.inspect(Elasticsearch.post(Punkmade.ElasticsearchCluster, "/scenes/_doc/_search", %{"query" => %{"match_all" => %{}}}), label: "Test Search ")
+
     socket =
       socket
       |> assign(:my_scenes, users_scenes)
       |> assign(:scene_form, to_form(@scene_form_default))
+
 
     {:ok, socket}
   end

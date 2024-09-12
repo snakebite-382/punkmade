@@ -21,9 +21,15 @@ config :punkmade, Punkmade.ElasticsearchCluster,
   url: "http://localhost:9200",
   json_library: Jason,
   api: Elasticsearch.API.HTTP,
-  scenes: %{
-    store: Punkmade.ElasticseachStore,
-    sources: [Punkmade.Scenes.Scene]
+  indexes: %{
+    scenes: %{
+      store: Punkmade.ElasticseachStore,
+      sources: [Punkmade.Scenes.Scene],
+      bulk_page_size: 5000,
+      bulk_wait_interval: 15_000,
+      bulk_action: "create",
+      settings: "priv/elasticsearch/posts.json"
+    }
   }
 
 config :punkmade, PunkmadeWeb.Endpoint,

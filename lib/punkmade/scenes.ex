@@ -41,6 +41,7 @@ defmodule Punkmade.Scenes do
 
     joined =
       if not is_atom(scene) do
+        Elasticsearch.put_document(Punkmade.ElasticsearchCluster, scene, "scenes")
         join_scene?(user.id, scene.id)
       else
         false

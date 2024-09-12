@@ -12,6 +12,7 @@
       <%= if not @authed do %>
         <.link href="/sign_in">Sign in</.link>
       <% else %>
+        <.link href="/scenes">Scenes</.link>
         <.link href={"/users/#{@my_user.id}"}>My Profile</.link>
         <.link href="/sign_out">Sign Out</.link>
       <% end %>
