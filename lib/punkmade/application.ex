@@ -18,7 +18,7 @@ defmodule Punkmade.Application do
       # {Punkmade.Worker, arg},
       # Start to serve requests, typically the last entry
       PunkmadeWeb.Endpoint,
-      Punkmade.ElasticsearchCluster
+      {Punkmade.ElasticsearchCluster, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
