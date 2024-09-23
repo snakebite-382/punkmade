@@ -38,3 +38,4 @@ npm-debug.log
 .env
 run.sh
 clear_db.sh
+/elasticsearch

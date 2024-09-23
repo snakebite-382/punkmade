@@ -28,7 +28,7 @@ config :punkmade, Punkmade.ElasticsearchCluster,
       bulk_page_size: 5000,
       bulk_wait_interval: 15_000,
       bulk_action: "create",
-      settings: "priv/elasticsearch/posts.json"
+      settings: "priv/elasticsearch/scenes.json"
     }
   }
 
