@@ -6,7 +6,6 @@ defmodule Punkmade.Scenes do
     endpoint: PunkmadeWeb.Endpoint,
     statics: ~w(images)
 
-  alias Hex.API.User
   alias Punkmade.Accounts.Userscene
   alias Hex.State
   alias Hex.State
@@ -20,11 +19,22 @@ defmodule Punkmade.Scenes do
       where: u.user_id == ^user_id,
       join: s in Punkmade.Scenes.Scene,
       on: s.id == u.scene_id,
+      left_join: c in Punkmade.Scenes.City,
+      on: s.city_id == c.id,
+      left_join: st in Punkmade.Scenes.State,
+      on: c.state_id == st.id,
       select: %{
-        scene: s
+        scene: s,
+        city: c,
+        state: st
       }
     )
     |> Repo.all()
+    |> Enum.map(fn entry ->
+      entry.scene
+      |> Map.put(:state, entry.state)
+      |> Map.put(:city, entry.city)
+    end)
   end
 
   def create_scene_from_form(form, user) do
@@ -50,7 +60,7 @@ defmodule Punkmade.Scenes do
     {form, scene, joined}
   end
 
-  defp join_scene?(user_id, scene_id) do
+  def join_scene?(user_id, scene_id) do
     Userscene.create(%Userscene{}, %{user_id: user_id, scene_id: scene_id})
     |> Repo.insert()
     |> case do
@@ -232,5 +242,178 @@ defmodule Punkmade.Scenes do
     else
       [{error_name, error} | errors]
     end
+  end
+
+  def leave_scene(scene_id, user_id) do
+    from(us in Userscene,
+      where:
+        us.user_id == ^user_id and
+          us.scene_id == ^scene_id
+    )
+    |> Repo.one()
+    |> case do
+      nil ->
+        :error
+
+      userscene ->
+        Repo.delete(userscene)
+        |> case do
+          {:ok, _} -> :ok
+          {:error, _} -> :error
+        end
+    end
+  end
+
+  def search_scenes(name, city, state) do
+    should_clauses =
+      []
+      |> add_scene_clause(name, 1.5)
+      |> add_city_clause(city, 2)
+
+    must_clauses =
+      []
+      |> add_state_clause(state)
+
+    query =
+      %{
+        "query" => %{
+          "bool" => %{
+            "should" => should_clauses,
+            "must" => must_clauses
+          }
+        }
+      }
+
+    if Enum.empty?(should_clauses) and Enum.empty?(must_clauses) do
+      []
+    else
+      Elasticsearch.post(
+        Punkmade.ElasticsearchCluster,
+        "/scenes/_search",
+        query
+      )
+      |> case do
+        {:ok, result} ->
+          result
+          |> Map.get("hits")
+          |> Map.get("hits")
+
+        {:error, _} ->
+          []
+      end
+    end
+  end
+
+  defp add_scene_clause(clauses, value, boost \\ 1)
+  defp add_scene_clause(clauses, nil, _), do: clauses
+  defp add_scene_clause(clauses, "", _), do: clauses
+
+  defp add_scene_clause(clauses, value, boost) do
+    clauses ++
+      [
+        %{
+          "match" => %{
+            "name" => %{
+              "query" => String.downcase(value),
+              "boost" => boost
+            }
+          }
+        }
+      ]
+  end
+
+  defp add_city_clause(clauses, value, boost \\ 1)
+
+  defp add_city_clause(clauses, nil, _), do: clauses
+  defp add_city_clause(clauses, "", _), do: clauses
+
+  defp add_city_clause(clauses, value, boost) do
+    clauses ++
+      [
+        %{
+          "fuzzy" => %{
+            "city_name" => %{
+              "value" => String.downcase(value),
+              "fuzziness" => "AUTO",
+              "boost" => boost
+            }
+          }
+        }
+      ]
+  end
+
+  defp add_state_clause(clauses, value, boost \\ 1)
+  defp add_state_clause(clauses, nil, _), do: clauses
+  defp add_state_clause(clauses, "", _), do: clauses
+
+  defp add_state_clause(clauses, value, boost) do
+    clauses ++
+      [
+        %{
+          "term" => %{
+            "state_name" => %{
+              "value" => String.downcase(value),
+              "boost" => boost
+            }
+          }
+        }
+      ]
+  end
+
+  def get_scenes_from_search(results) do
+    multi =
+      Enum.reduce(results, Ecto.Multi.new(), fn result, multi ->
+        id = Map.get(result, "_id")
+        source = Map.get(result, "_source")
+        score = Map.get(result, "_score")
+
+        Ecto.Multi.run(
+          multi,
+          "get_scene_#{id}",
+          fn _repo, _ ->
+            case Repo.get(Scene, id) do
+              nil ->
+                {:error, "not found"}
+
+              scene ->
+                {:ok,
+                 scene
+                 |> Map.put(
+                   :city,
+                   %{
+                     name:
+                       Map.get(source, "city_name")
+                       |> first_letter_upcase()
+                   }
+                 )
+                 |> Map.put(
+                   :state,
+                   %{
+                     name:
+                       Map.get(source, "state_name")
+                       |> String.upcase()
+                   }
+                 )
+                 |> Map.put(:search_score, score)}
+            end
+          end
+        )
+      end)
+
+    case Repo.transaction(multi) do
+      {:ok, results} ->
+        {:ok,
+         Enum.map(results, fn {_key, scene} -> scene end)
+         |> Enum.sort_by(& &1.search_score, :desc)}
+
+      {:error, _, reason, _} ->
+        {:error, reason}
+    end
+  end
+
+  defp first_letter_upcase(string) do
+    {first_letter, rest} = String.split_at(string, 1)
+
+    String.upcase(first_letter) <> rest
   end
 end

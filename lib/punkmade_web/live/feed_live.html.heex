@@ -1,12 +1,18 @@
 <h1>Feed</h1>
 
 <div class="scenes">
-  <h2>Scenes: </h2>
-<h3><.link navigate="/scenes">manage scenes</.link></h3>
-  <%= for scene <- @users_scenes do %>
-    <%= scene %>
-  <% end %>
-  <%= if @users_scenes == [] do %>
+  <h2>Scenes:</h2>
+  <ul>
+    <%= for scene <- @users_scenes do %>
+      <li>
+        <.scene_info scene={scene} key="users_scenes:scene_#{scene.id}" />
+      </li>
+      <% end %>
+  </ul>
+  <h2 class="text-2xl underline">
+    <.link navigate="/scenes">manage scenes</.link>
+  </h2>
+  <%= if @users_scenes==[] do %>
     You are not in any scenes
-  <% end %>
+    <% end %>
 </div>

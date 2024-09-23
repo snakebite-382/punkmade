@@ -1,19 +1,27 @@
 <h1>Your Scenes</h1>
 
 <div class="my-scenes">
-  <%= for scene <- @my_scenes do %>
-  <% end %>
-  <%= if @my_scenes == [] do %>
-    you are not in any scenes
-  <% end %>
+    <%= if @my_scenes==[] do %>
+        you are not in any scenes
+    <% else %>
+      <ul>
+        <%= for scene <- @my_scenes do %>
+          <li>
+            <.scene_info scene={scene} key="my_scenes:scene_#{scene.id}">
+              <li phx-click="leave_scene" phx-value-id={scene.id}>
+                <.icon name="hero-x-mark" />
+              </li>
+            </.scene_info>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
 </div>
-<br>
+
+<br />
+
 <div class="create_scene">
-  <.simple_form 
-    for={@scene_form} 
-    phx-change="validate_scene"
-    phx-submit="create_scene"
-  >
+  <.simple_form for={@scene_form} phx-change="validate_scene" phx-submit="create_scene">
     <label for="state_name">State: </label>
     <.input field={@scene_form[:state_name]} />
     <label for="city_name">City: </label>
@@ -24,4 +32,14 @@
       <.button phx-disable-with="Changing...">Create</.button>
     </:actions>
   </.simple_form>
+
+    <ul>
+      <%= for scene <- @search_results do %>
+        <li>
+          <.scene_info scene={scene} key="search_results:scene_#{scene.id}">
+            <li phx-click="join_scene" phx-value-id={scene.id}><.icon name="hero-plus" class="mb-1"/></li>
+          </.scene_info>
+        </li>
+      <% end %>
+    </ul>
 </div>
