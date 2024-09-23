@@ -28,7 +28,6 @@ defmodule Punkmade.Scenes.City do
       add_error(changeset, :name, "NO CITY")
     else
       if city_exists?(city, state) do
-        IO.puts("CITY EXISTS")
         changeset
       else
         add_error(changeset, :name, "City does not exist")
@@ -41,21 +40,31 @@ defmodule Punkmade.Scenes.City do
     url = "#{@apiurl}?query=#{URI.encode(query)}&key=#{@apikey}"
 
     case HTTPoison.get(url) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: body}} -> parse_response(body, city)
-      {:ok, %HTTPoison.Response{status_code: 404}} -> {:error, "NOT FOUND"}
-      {:error, reason} -> {:error, reason}
+      {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
+        parse_response(body, city, state)
+
+      {:ok, %HTTPoison.Response{status_code: 404}} ->
+        {:error, "NOT FOUND"}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
-  def parse_response(body, city) do
+  def parse_response(body, city, state) do
     case Jason.decode(body) do
       {:ok, %{"results" => results}} when length(results) != [] ->
         result = Enum.at(results, 0)
         types = Map.get(result, "types")
+        formatted_address = Map.get(result, "formatted_address")
 
         if String.downcase(Map.get(result, "name")) == String.downcase(city) and
              Enum.member?(types, "locality") and
-             Enum.member?(types, "political") do
+             Enum.member?(types, "political") and
+             String.contains?(
+               formatted_address,
+               String.upcase(state)
+             ) do
           true
         else
           false
