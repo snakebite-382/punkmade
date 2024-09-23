@@ -45,11 +45,9 @@ defimpl Elasticsearch.Document, for: Punkmade.Scenes.Scene do
 
     %{
       id: scene.id,
-      name: scene.name,
-      city_id: scene.id,
-      mascot_url: scene.mascot_url,
-      state_name: location_info.state.name,
-      city_name: location_info.city.name
+      name: String.downcase(scene.name),
+      state_name: String.downcase(location_info.state.name),
+      city_name: String.downcase(location_info.city.name)
     }
   end
 end
