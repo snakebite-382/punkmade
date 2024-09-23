@@ -134,6 +134,26 @@ defmodule PunkmadeWeb.CoreComponents do
     """
   end
 
+  attr :scene, :map,
+    required: true,
+    doc:
+      "The scene you wish to display with city name as scene.city.name and state name as scene.state.name"
+
+  attr :key, :string, required: true
+  slot :inner_block
+
+  def scene_info(assigns) do
+    ~H"""
+    <ul id="scene-#{@scene.id}" class="flex flex-row items-center space-x-2 text-xl">
+      <img src={@scene.mascot_url} class="w-16 h-auto clip-circle" />
+      <li><%= @scene.city.name %></li>
+      <li><%= @scene.name %></li>
+      <li><%= @scene.state.name %></li>
+      <%= render_slot(@inner_block) %>
+    </ul>
+    """
+  end
+
   @doc """
   Shows the flash group with standard titles and content.
 
