@@ -1,8 +1,6 @@
 defmodule Punkmade.ElasticseachStore do
   @behaviour Elasticsearch.Store
 
-  import Ecto.Query
-
   alias Punkmade.Repo
 
   @impl true

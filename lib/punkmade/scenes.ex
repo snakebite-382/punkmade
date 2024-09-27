@@ -304,7 +304,7 @@ defmodule Punkmade.Scenes do
     end
   end
 
-  defp add_scene_clause(clauses, value, boost \\ 1)
+  defp add_scene_clause(clauses, value, boost)
   defp add_scene_clause(clauses, nil, _), do: clauses
   defp add_scene_clause(clauses, "", _), do: clauses
 
@@ -322,7 +322,7 @@ defmodule Punkmade.Scenes do
       ]
   end
 
-  defp add_city_clause(clauses, value, boost \\ 1)
+  defp add_city_clause(clauses, value, boost)
 
   defp add_city_clause(clauses, nil, _), do: clauses
   defp add_city_clause(clauses, "", _), do: clauses
