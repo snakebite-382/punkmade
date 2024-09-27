@@ -25,7 +25,7 @@ defmodule PunkmadeWeb.AuthController do
             :second
           )
 
-        redirect_uri =
+        {redirect_uri, session_id} =
           UserAuth.login(
             %{
               email: Map.get(info, "email"),
@@ -49,6 +49,7 @@ defmodule PunkmadeWeb.AuthController do
 
         clear_active_session(conn, cookie_opts)
         |> put_resp_cookie("_access_token", Map.get(token, "access_token"), cookie_opts)
+        |> put_session(:session_id, session_id)
         |> redirect(to: redirect_uri)
 
       :error ->

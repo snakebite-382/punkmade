@@ -22,12 +22,55 @@ import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
 import topbar from "../vendor/topbar";
 
+let Hooks = {};
+
+const ActivityEvents = ["mousemove", "keyup", "keydown", "click"];
+const reportCooldown = 5 * 1000;
+const timeToIdle = 10 * 1000;
+
+Hooks.KeepAlive = {
+  mounted() {
+    this.active = true;
+    this.lastChange = Date.now();
+
+    this.handleEvent = () => {
+      this.active = true;
+      this.lastChange = Date.now();
+    };
+
+    this.reportInterval = setInterval(() => {
+      this.pushEvent("user_activity_report", {
+        active: this.active,
+        last_change: this.lastChange,
+      });
+
+      if (Date.now() - this.lastChange >= timeToIdle && this.active) {
+        this.active = false;
+        this.lastChange = Date.now();
+      }
+    }, reportCooldown);
+
+    ActivityEvents.forEach((event) => {
+      window.addEventListener(event, this.handleEvent);
+    });
+  },
+
+  destroyed() {
+    ActivityEvents.forEach((event) => {
+      window.removeEventListener(event, this.handleEvent);
+    });
+
+    clearInterval(this.reportInterval);
+  },
+};
+
 let csrfToken = document
   .querySelector("meta[name='csrf-token']")
   .getAttribute("content");
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: { _csrf_token: csrfToken },
+  hooks: Hooks,
 });
 
 // Show progress bar on live navigation and form submits

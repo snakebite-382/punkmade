@@ -1,4 +1,5 @@
 defmodule PunkmadeWeb.UserAuth do
+  alias Punkmade.Accounts.Oauthuser
   alias Ecto.Repo
   alias Punkmade.Repo
   alias Punkmade.Accounts
@@ -27,9 +28,9 @@ defmodule PunkmadeWeb.UserAuth do
       user = Accounts.register_user!(email)
       oauth_user = Accounts.add_oauth_user!(provider, user.id, provider_user_id)
 
-      Accounts.create_session!(oauth_user.id, user.id, token)
+      id = Accounts.create_session!(oauth_user.id, user.id, token)
 
-      "/users/#{user.id}?new_user=true&new_oauth=#{provider}"
+      {"/users/#{user.id}?new_user=true&new_oauth=#{provider}", id}
     else
       get_oauth_user_query =
         from o in Accounts.Oauthuser,
@@ -39,13 +40,13 @@ defmodule PunkmadeWeb.UserAuth do
 
       if is_nil(oauth_user) do
         oauth_user = Accounts.add_oauth_user!(provider, user.id, provider_user_id)
-        Accounts.create_session!(oauth_user.id, user.id, token)
+        id = Accounts.create_session!(oauth_user.id, user.id, token)
 
-        "/users/#{user.id}?new_oauth=#{provider}"
+        {"/users/#{user.id}?new_oauth=#{provider}", id}
       else
-        Accounts.create_session!(oauth_user.id, user.id, token)
+        id = Accounts.create_session!(oauth_user.id, user.id, token)
 
-        "/feed"
+        {"/feed", id}
       end
     end
   end
@@ -58,6 +59,25 @@ defmodule PunkmadeWeb.UserAuth do
     conn
     |> put_session(:authed, token_valid)
     |> assign(:authed, token_valid)
+  end
+
+  def refresh_session(session) do
+    from(o in Oauthuser, where: o.id == ^session.oauth_user_id)
+    |> Repo.one()
+    |> case do
+      nil ->
+        {:error, "No OAuthuser"}
+
+      oauth_user ->
+        case oauth_user.provider do
+          "google " ->
+            Punkmade.OAuth.Google.refresh_token!(session.refresh_token)
+            |> case do
+              {:error, _} -> {:error, "Could Not Refresh"}
+              {:ok, refresh_token} -> {:ok, refresh_token}
+            end
+        end
+    end
   end
 
   defp get_token(conn) do
@@ -113,14 +133,14 @@ defmodule PunkmadeWeb.UserAuth do
   def redirect_to_feed(conn, _opts) do
     if conn.assigns.authed do
       conn |> Phoenix.Controller.redirect(to: "/feed") |> halt()
-    else 
+    else
       conn
     end
   end
 
   def on_mount(:redirect_if_authed, _params, session, socket) do
     if Map.get(session, "authed") do
-      {:halt, Phoenix.LiveView.redirect(socket, to: "/")}
+      {:halt, Phoenix.LiveView.redirect(socket, to: "/feed")}
     else
       {:cont, socket}
     end
@@ -128,7 +148,7 @@ defmodule PunkmadeWeb.UserAuth do
 
   def on_mount(:redirect_if_not_authed, _params, session, socket) do
     if not Map.get(session, "authed") do
-      {:halt, socket |> Phoenix.LiveView.redirect(to: "/feed")}
+      {:halt, socket |> Phoenix.LiveView.redirect(to: "/")}
     else
       {:cont, socket}
     end
