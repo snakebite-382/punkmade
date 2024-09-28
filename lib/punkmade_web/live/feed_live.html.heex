@@ -5,7 +5,7 @@
   <ul>
     <%= for scene <- @users_scenes do %>
       <li>
-        <.scene_info scene={scene} key="users_scenes:scene_#{scene.id}" />
+        <.scene_info scene={scene} key={"users_scenes:scene_#{scene.id}"} />
       </li>
       <% end %>
   </ul>
@@ -16,3 +16,5 @@
     You are not in any scenes
     <% end %>
 </div>
+
+<.live_component module={PunkmadeWeb.LiveComponent.KeepAlive} id="keep-alive" session_id={@session_id}/>

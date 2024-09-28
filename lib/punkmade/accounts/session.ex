@@ -17,4 +17,10 @@ defmodule Punkmade.Accounts.Session do
     |> cast(attrs, [:oauth_user_id, :user_id, :access_token, :refresh_token, :token_expiry])
     |> validate_required([:oauth_user_id, :user_id, :access_token, :refresh_token, :token_expiry])
   end
+
+  def refresh(session, attrs) do
+    session
+    |> cast(attrs, [:token_expiry])
+    |> validate_required([:token_expiry])
+  end
 end

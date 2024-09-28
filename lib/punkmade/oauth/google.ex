@@ -24,7 +24,11 @@ defmodule Punkmade.OAuth.Google do
 
   def authorize_url! do
     client()
-    |> OAuth2.Client.authorize_url!(scope: "https://www.googleapis.com/auth/userinfo.email", access_type: "offline", prompt: "consent" )
+    |> OAuth2.Client.authorize_url!(
+      scope: "https://www.googleapis.com/auth/userinfo.email",
+      access_type: "offline",
+      prompt: "consent"
+    )
   end
 
   def get_token!(params) do
@@ -42,8 +46,14 @@ defmodule Punkmade.OAuth.Google do
     |> OAuth2.Strategy.AuthCode.get_token(params, headers)
   end
 
-  def refresh_token!(refresh_token) do
+  def refresh_token(refresh_token, access_token, token_expiry) do
     client()
-    |> OAuth2.Client.refresh_token(refresh_token: refresh_token)
+    |> Map.put(:token, %OAuth2.AccessToken{
+      access_token: access_token,
+      refresh_token: refresh_token,
+      expires_at: token_expiry,
+      token_type: "Bearer"
+    })
+    |> OAuth2.Client.refresh_token()
   end
 end

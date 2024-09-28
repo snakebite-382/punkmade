@@ -41,7 +41,7 @@ defmodule PunkmadeWeb.AuthController do
 
         cookie_opts = [
           max_age: Map.get(token, "expires_in"),
-          http_only: true,
+          http_only: false,
           secure: true,
           encrypt: true,
           same_site: "lax"

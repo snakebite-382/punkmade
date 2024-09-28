@@ -144,7 +144,7 @@ defmodule PunkmadeWeb.CoreComponents do
 
   def scene_info(assigns) do
     ~H"""
-    <ul id="scene-#{@scene.id}" class="flex flex-row items-center space-x-2 text-xl">
+    <ul id={"scene-#{@scene.id}"} class="flex flex-row items-center space-x-2 text-xl">
       <img src={@scene.mascot_url} class="w-16 h-auto clip-circle" />
       <li><%= @scene.city.name %></li>
       <li><%= @scene.name %></li>

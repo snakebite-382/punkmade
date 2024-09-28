@@ -25,7 +25,7 @@ import topbar from "../vendor/topbar";
 let Hooks = {};
 
 const ActivityEvents = ["mousemove", "keyup", "keydown", "click"];
-const reportCooldown = 5 * 1000;
+const reportCooldown = 30 * 1000;
 const timeToIdle = 10 * 1000;
 
 Hooks.KeepAlive = {
@@ -33,13 +33,13 @@ Hooks.KeepAlive = {
     this.active = true;
     this.lastChange = Date.now();
 
-    this.handleEvent = () => {
+    this.handleActivity = () => {
       this.active = true;
       this.lastChange = Date.now();
     };
 
-    this.reportInterval = setInterval(() => {
-      this.pushEvent("user_activity_report", {
+    this.report = () => {
+      this.pushEventTo("#keep-alive", "user_activity_report", {
         active: this.active,
         last_change: this.lastChange,
       });
@@ -48,11 +48,29 @@ Hooks.KeepAlive = {
         this.active = false;
         this.lastChange = Date.now();
       }
-    }, reportCooldown);
+    };
+
+    this.reportInterval = setInterval(this.report, reportCooldown);
 
     ActivityEvents.forEach((event) => {
-      window.addEventListener(event, this.handleEvent);
+      window.addEventListener(event, this.handleActivity);
     });
+
+    this.handleEvent("session_refresh", () => {
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+      }
+
+      const token = getCookie("_access_token");
+
+      if (token) {
+        document.cookie = `_access_token=${token}; MaxAge=${3600}; Path=/; Secure=true; SameSite=lax;`;
+      }
+    });
+
+    this.report();
   },
 
   destroyed() {
