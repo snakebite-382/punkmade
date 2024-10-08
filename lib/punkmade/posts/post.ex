@@ -14,6 +14,18 @@ defmodule Punkmade.Posts.Post do
     post
     |> cast(attrs, [:user_id, :scene_id, :title])
     |> validate_required([:user_id, :scene_id, :title])
+    |> validate_title()
+  end
+
+  def form(post, attrs) do
+    post
+    |> cast(attrs, [:title])
+    |> validate_required([:title])
+    |> validate_title()
+  end
+
+  def validate_title(changeset) do
+    changeset
     |> validate_length(:title, min: 8, max: 128)
   end
 end

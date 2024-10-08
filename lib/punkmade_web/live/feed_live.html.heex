@@ -17,4 +17,6 @@
     <% end %>
 </div>
 
-<.live_component module={PunkmadeWeb.LiveComponent.KeepAlive} id="keep-alive" session_id={@session_id}/>
+<.live_component module={PunkmadeWeb.LiveComponents.PostForm} id="post-form"/>
+
+<.live_component module={PunkmadeWeb.LiveComponents.KeepAlive} id="keep-alive" session_id={@session_id} />
