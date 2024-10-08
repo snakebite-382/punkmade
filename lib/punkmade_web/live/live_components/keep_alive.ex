@@ -1,4 +1,4 @@
-defmodule PunkmadeWeb.LiveComponent.KeepAlive do
+defmodule PunkmadeWeb.LiveComponents.KeepAlive do
   use Phoenix.LiveComponent
   alias PunkmadeWeb.UserAuth
 
