@@ -15,3 +15,15 @@ A social media site aimed at providing a better platform for punk and other alte
 ## Tech at play
 
 This site uses Phoenix with Ecto and Postgresql for the data base as well as various Oauth2 providers for authentication, and the google locations API to verify the existence of cities within a state
+
+## TODO:
+
+- [ ] Posts
+  - [ ] Complete post creation
+  - [ ] Support images
+  - [ ] Support videos
+- [ ] Auth
+  - [ ] Keep alive in all liveviews
+  - [ ] Keep alive on navigation
+  - [ ] Support more providers
+  - [ ] Add Auth0 support
